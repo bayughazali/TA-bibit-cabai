@@ -1,0 +1,143 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProductRecommendationController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\TransaksiController;
+use App\Http\Controllers\UserController;
+
+/*
+|--------------------------------------------------------------------------
+| Public Routes
+|--------------------------------------------------------------------------
+*/
+
+// Homepage
+Route::get('/', [HomeController::class, 'index'])->name('home');
+
+// Produk terlaris
+Route::get('/produk-terlaris', [ProductRecommendationController::class, 'index'])
+    ->name('products.best-selling');
+
+
+// Contact Us
+Route::get('/contact', [ContactController::class, 'index'])->name('contact');
+Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+
+/*
+|--------------------------------------------------------------------------
+| Checkout Routes - PINDAH KE SINI (di luar admin group)
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('checkout')->name('checkout.')->group(function () {
+    Route::get('/', [CheckoutController::class, 'index'])->name('index');
+    Route::post('/process', [CheckoutController::class, 'process'])->name('process');
+    Route::get('/success/{id}', [CheckoutController::class, 'success'])->name('success');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Authentication Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [LoginController::class, 'login']);
+    Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
+    Route::post('/register', [RegisterController::class, 'register']);
+});
+
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
+
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('api')->name('api.')->group(function () {
+    Route::get('/best-selling-products', [ProductRecommendationController::class, 'apiGetBestSelling'])
+        ->name('best-selling-products');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Admin Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('admin')->name('admin.')->group(function () {
+    
+    // Admin login routes (accessible to guests)
+    Route::middleware('guest')->group(function () {
+        Route::get('/login', function () {
+            return view('admin.login');
+        })->name('login.form');
+        
+        Route::post('/login', [AdminController::class, 'login'])->name('login');
+    });
+    
+    // Protected admin routes (requires authentication)
+    Route::middleware(['auth', 'web'])->group(function () {
+        
+        // Dashboard
+        Route::get('/dashboard', function () {
+            $totalProducts = \App\Models\Product::count();
+            $activeProducts = \App\Models\Product::where('status', 'aktif')->count();
+            $totalSold = \App\Models\Product::sum('sold') ?? 0;
+            $lowStock = \App\Models\Product::where('stock', '<=', 10)->count();
+            
+            return view('admin.dashboard', compact('totalProducts', 'activeProducts', 'totalSold', 'lowStock'));
+        })->name('dashboard');
+
+        // Product CRUD Routes
+        Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+        Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
+        Route::post('/products', [ProductController::class, 'store'])->name('products.store');
+        Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
+        Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
+        Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
+        Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.delete');
+
+        // Transaksi Management Routes
+        Route::get('/transaksis', [TransaksiController::class, 'index'])->name('transaksis.index');
+        Route::get('/transaksis/{id}', [TransaksiController::class, 'show'])->name('transaksis.show');
+        Route::get('/transaksis/{id}/edit', [TransaksiController::class, 'edit'])->name('transaksis.edit');
+        Route::put('/transaksis/{id}', [TransaksiController::class, 'update'])->name('transaksis.update');
+        Route::delete('/transaksis/{id}', [TransaksiController::class, 'destroy'])->name('transaksis.destroy');
+        Route::post('/transaksis/{id}/update-status', [TransaksiController::class, 'updateStatus'])->name('transaksis.update-status');
+        Route::post('/transaksis/{id}/update-payment-status', [TransaksiController::class, 'updatePaymentStatus'])->name('transaksis.update-payment-status');
+        Route::post('/transaksis/{id}/cancel', [TransaksiController::class, 'cancel'])->name('transaksis.cancel');
+        Route::get('/transaksis-export', [TransaksiController::class, 'export'])->name('transaksis.export');
+        Route::get('/transaksis/{id}/print', [TransaksiController::class, 'printInvoice'])->name('transaksis.print');
+
+
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
+        Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
+        Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+        Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
+
+        // Other admin routes
+        Route::get('/orders', [AdminController::class, 'orders'])->name('orders');
+        Route::get('/users', [AdminController::class, 'users'])->name('users');
+        Route::get('/reports', [AdminController::class, 'reports'])->name('reports');
+        Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
+        
+        // Admin logout
+        Route::post('/logout', [AdminController::class, 'logout'])->name('logout');
+    });
+}); // ← Penutup admin group yang benar (HANYA SATU)
+
+
