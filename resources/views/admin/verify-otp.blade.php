@@ -40,7 +40,6 @@
             border-color: #11998e;
             box-shadow: 0 0 0 0.2rem rgba(17, 153, 142, 0.25);
         }
-
         .step-wrapper {
             display: flex;
             align-items: center;
@@ -64,8 +63,6 @@
         .step-line { height: 2px; width: 36px; margin: 0 6px 18px; }
         .step-line.done { background: #11998e; }
         .step-line.idle { background: #dee2e6; }
-
-        /* OTP Boxes */
         .otp-box {
             width: 46px !important;
             height: 54px !important;
@@ -86,7 +83,13 @@
             border-color: #11998e !important;
             background-color: #f0fff4 !important;
         }
-
+        /* Kotak OTP saat expired */
+        .otp-box:disabled {
+            background-color: #f8f9fa !important;
+            border-color: #dee2e6 !important;
+            color: #adb5bd !important;
+            cursor: not-allowed !important;
+        }
         .email-badge {
             background: #f0fff4;
             border: 1px solid #11998e33;
@@ -94,7 +97,6 @@
             border-radius: 8px;
             padding: 10px 14px;
         }
-
         .icon-box {
             width: 64px; height: 64px;
             background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
@@ -160,6 +162,9 @@
                         </div>
                     </div>
 
+                    {{-- =============================================
+                         FORM OTP — disabled seluruhnya saat expired
+                         ============================================= --}}
                     <form method="POST" action="{{ route('admin.password.verify-otp') }}" id="otpForm" novalidate>
                         @csrf
 
@@ -170,12 +175,18 @@
 
                             {{-- OTP Boxes --}}
                             <div class="d-flex justify-content-center gap-2 mb-2" id="otpBoxes">
-                                <input type="text" class="otp-box form-control" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
-                                <input type="text" class="otp-box form-control" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
-                                <input type="text" class="otp-box form-control" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
-                                <input type="text" class="otp-box form-control" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
-                                <input type="text" class="otp-box form-control" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
-                                <input type="text" class="otp-box form-control" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+                                {{-- disabled langsung dari PHP jika backend bilang expired --}}
+                                @php $isExpiredFromServer = session('otp_expired', false); @endphp
+
+                                @for ($i = 0; $i < 6; $i++)
+                                <input type="text"
+                                       class="otp-box form-control"
+                                       maxlength="1"
+                                       inputmode="numeric"
+                                       pattern="[0-9]"
+                                       autocomplete="off"
+                                       {{ $isExpiredFromServer ? 'disabled' : '' }}>
+                                @endfor
                             </div>
                             <input type="hidden" name="otp" id="otpHidden">
 
@@ -186,32 +197,44 @@
 
                         {{-- Countdown Timer --}}
                         <div class="text-center mb-4">
-                            <div id="timerWrapper">
+                            <div id="timerWrapper" {{ $isExpiredFromServer ? 'style=display:none;' : '' }}>
                                 <p class="text-muted small mb-1">Kode berlaku selama:</p>
-                                <span id="countdown" class="badge fs-6 px-3 py-2" style="background:#11998e;">10:00</span>
+                                <span id="countdown" class="badge fs-6 px-3 py-2" style="background:#11998e;">03:00</span>
                             </div>
-                            <div id="expiredWrapper" style="display:none;">
+                            <div id="expiredWrapper" {{ $isExpiredFromServer ? '' : 'style=display:none;' }}>
                                 <span class="badge bg-danger fs-6 px-3 py-2">
                                     ❌ Kode sudah kadaluarsa
                                 </span>
                             </div>
                         </div>
 
+                        {{-- Tombol Verifikasi --}}
+                        {{-- disabled dari server jika expired, dari JS jika OTP belum 6 digit --}}
                         <div class="d-grid mb-3">
-                            <button type="submit" class="btn btn-primary-custom py-2 fw-bold" id="submitBtn" disabled>
-                                ✅ Verifikasi Kode
+                            <button type="submit"
+                                    class="btn btn-primary-custom py-2 fw-bold"
+                                    id="submitBtn"
+                                    {{ $isExpiredFromServer ? 'disabled' : 'disabled' }}>
+                                @if($isExpiredFromServer)
+                                    ⛔ Waktu Habis
+                                @else
+                                    ✅ Verifikasi Kode
+                                @endif
                             </button>
                         </div>
                     </form>
 
                     <hr class="my-3">
 
-                    {{-- Resend --}}
+                    {{-- Resend — hanya aktif saat expired --}}
                     <div class="text-center">
                         <p class="text-muted small mb-2">Tidak menerima kode?</p>
-                        <form method="POST" action="{{ route('admin.password.resend-otp') }}">
+                        <form method="POST" action="{{ route('admin.password.resend-otp') }}" id="resendForm">
                             @csrf
-                            <button type="submit" class="btn btn-outline-secondary btn-sm" id="resendBtn" disabled>
+                            <button type="submit"
+                                    class="btn btn-outline-secondary btn-sm"
+                                    id="resendBtn"
+                                    {{ $isExpiredFromServer ? '' : 'disabled' }}>
                                 🔄 Kirim Ulang Kode
                             </button>
                         </form>
@@ -231,15 +254,29 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const boxes      = document.querySelectorAll('.otp-box');
-    const otpHidden  = document.getElementById('otpHidden');
-    const submitBtn  = document.getElementById('submitBtn');
-    const resendBtn  = document.getElementById('resendBtn');
-    const countdown  = document.getElementById('countdown');
-    const timerWrap  = document.getElementById('timerWrapper');
-    const expiredWrap= document.getElementById('expiredWrapper');
 
-    // ---- OTP input logic ----
+    // ── Variabel elemen ──────────────────────────────────────
+    const boxes       = document.querySelectorAll('.otp-box');
+    const otpHidden   = document.getElementById('otpHidden');
+    const submitBtn   = document.getElementById('submitBtn');
+    const resendBtn   = document.getElementById('resendBtn');
+    const resendForm  = document.getElementById('resendForm');
+    const countdown   = document.getElementById('countdown');
+    const timerWrap   = document.getElementById('timerWrapper');
+    const expiredWrap = document.getElementById('expiredWrapper');
+
+    // ── Flag dari backend (PHP → JS) ─────────────────────────
+    // true  = backend sudah konfirmasi OTP expired (record dihapus)
+    // false = backend belum, timer frontend yang jalan
+    const isExpiredFromServer = {{ $isExpiredFromServer ? 'true' : 'false' }};
+
+    // ── Jika sudah expired dari server → langsung lock ───────
+    if (isExpiredFromServer) {
+        lockExpired();
+        return; // stop, tidak perlu jalankan timer
+    }
+
+    // ── OTP input logic ──────────────────────────────────────
     boxes.forEach((box, i) => {
         box.addEventListener('input', function () {
             this.value = this.value.replace(/[^0-9]/g, '');
@@ -263,9 +300,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
         box.addEventListener('paste', function (e) {
             e.preventDefault();
-            const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+            const pasted = (e.clipboardData || window.clipboardData)
+                            .getData('text').replace(/\D/g, '');
             pasted.split('').slice(0, 6).forEach((ch, idx) => {
-                if (boxes[idx]) { boxes[idx].value = ch; boxes[idx].classList.add('filled'); }
+                if (boxes[idx]) {
+                    boxes[idx].value = ch;
+                    boxes[idx].classList.add('filled');
+                }
             });
             updateHidden();
             boxes[Math.min(pasted.length, 5)].focus();
@@ -275,29 +316,91 @@ document.addEventListener('DOMContentLoaded', function () {
     function updateHidden() {
         const otp = Array.from(boxes).map(b => b.value).join('');
         otpHidden.value = otp;
-        submitBtn.disabled = otp.length !== 6;
+        // Tombol verify aktif hanya jika 6 digit DAN belum expired
+        submitBtn.disabled = (otp.length !== 6);
     }
 
-    // ---- Countdown 10 min ----
-    let secs = 10 * 60;
-    const timer = setInterval(() => {
-        secs--;
-        const m = String(Math.floor(secs / 60)).padStart(2, '0');
-        const s = String(secs % 60).padStart(2, '0');
-        countdown.textContent = `${m}:${s}`;
+    // ── Countdown — pakai sessionStorage agar refresh tidak reset ──
+    // Key unik per email agar tidak bentrok jika beda sesi
+    const STORAGE_KEY  = 'otp_timer_{{ md5(session("admin_reset_email", "x")) }}';
+    const PENALTY_KEY  = 'otp_penalty_{{ md5(session("admin_reset_email", "x")) }}';
+    const DURATION     = 3 * 60; // 180 detik (3 menit)
+    const WRONG_PENALTY = 30;    // pengurangan waktu saat salah OTP (detik)
 
-        if (secs <= 60) { countdown.style.background = '#ffc107'; countdown.style.color = '#000'; }
-        if (secs <= 0) {
-            clearInterval(timer);
-            timerWrap.style.display = 'none';
-            expiredWrap.style.display = 'block';
-            submitBtn.disabled = true;
-            resendBtn.disabled = false;
+    let startTime = parseInt(sessionStorage.getItem(STORAGE_KEY) || '0');
+    if (!startTime || isNaN(startTime)) {
+        startTime = Date.now();
+        sessionStorage.setItem(STORAGE_KEY, startTime);
+    }
+
+    // ── Terapkan penalty jika backend bilang OTP salah ────────
+    // Backend set session 'otp_wrong' = true saat Hash::check gagal
+    const wrongFromServer = {{ session('otp_wrong') ? 'true' : 'false' }};
+    if (wrongFromServer) {
+        // Tambah penalty ke startTime (maju ke masa lalu = sisa waktu berkurang)
+        startTime -= (WRONG_PENALTY * 1000);
+        sessionStorage.setItem(STORAGE_KEY, startTime);
+        sessionStorage.removeItem(PENALTY_KEY);
+    }
+
+    const timerInterval = setInterval(() => {
+        const elapsed   = Math.floor((Date.now() - startTime) / 1000);
+        const remaining = DURATION - elapsed;
+
+        if (remaining <= 0) {
+            clearInterval(timerInterval);
+            sessionStorage.removeItem(STORAGE_KEY);
+            lockExpired();
+            return;
         }
-    }, 1000);
 
-    // Enable resend after 60s
-    setTimeout(() => { resendBtn.disabled = false; }, 60000);
+        // Warna kuning saat sisa ≤ 30 detik
+        if (remaining <= 30) {
+            countdown.style.background = '#dc3545';
+            countdown.style.color = '#fff';
+        } else if (remaining <= 60) {
+            countdown.style.background = '#ffc107';
+            countdown.style.color = '#000';
+        }
+
+        const m = String(Math.floor(remaining / 60)).padStart(2, '0');
+        const s = String(remaining % 60).padStart(2, '0');
+        countdown.textContent = `${m}:${s}`;
+    }, 500);
+
+    // ── Fungsi lock saat expired ─────────────────────────────
+    function lockExpired() {
+        // Sembunyikan timer, tampilkan badge expired
+        if (timerWrap)   timerWrap.style.display   = 'none';
+        if (expiredWrap) expiredWrap.style.display  = 'block';
+
+        // Disable & ubah teks tombol verifikasi
+        submitBtn.disabled    = true;
+        submitBtn.textContent = '⛔ Waktu Habis';
+        submitBtn.style.background = '#adb5bd';
+
+        // Blokir submit form meski tombol diklik paksa (inject JS / inspect)
+        document.getElementById('otpForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            return false;
+        });
+
+        // Disable semua kotak OTP
+        boxes.forEach(b => {
+            b.disabled = true;
+            b.value    = '';
+            b.classList.remove('filled');
+        });
+
+        // Aktifkan tombol kirim ulang
+        resendBtn.disabled = false;
+    }
+
+    // ── Bersihkan sessionStorage saat resend dikirim ─────────
+    resendForm.addEventListener('submit', function () {
+        sessionStorage.removeItem(STORAGE_KEY);
+    });
+
 });
 </script>
 </body>

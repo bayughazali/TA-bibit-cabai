@@ -9,488 +9,821 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; }
-        .admin-container { display: flex; min-height: 100vh; }
+
+        :root {
+            --sidebar-width: 260px;
+            --green-dark: #15803d;
+            --green-main: #16a34a;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f1f5f2;
+            overflow-x: hidden;
+        }
 
         /* ===== SIDEBAR ===== */
         .sidebar {
-            width: 280px;
-            background: linear-gradient(180deg, #28a745, #20c997);
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--green-dark) 0%, #14532d 100%);
             color: white;
             min-height: 100vh;
             position: fixed;
             top: 0; left: 0;
-            z-index: 1000;
+            z-index: 1050;
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
         }
+
         .sidebar-header {
-            padding: 25px 20px;
+            padding: 24px 20px 20px;
             text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.12);
+            flex-shrink: 0;
         }
-        .sidebar-header h3 { font-size: 1.8rem; font-weight: bold; margin-bottom: 5px; }
-        .sidebar-header p { opacity: 0.8; font-size: 0.9rem; }
-        .sidebar-menu { padding: 20px 0; }
+
+        .sidebar-header .brand-icon { font-size: 2rem; margin-bottom: 6px; display: block; }
+        .sidebar-header h3 { font-size: 1.35rem; font-weight: 700; margin-bottom: 2px; }
+        .sidebar-header .subtitle { opacity: 0.65; font-size: 0.78rem; margin-bottom: 6px; }
+        .sidebar-header .admin-name {
+            display: inline-block;
+            background: rgba(255,255,255,0.15);
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 500;
+        }
+
+        .sidebar-menu { padding: 12px 0; flex: 1; }
+
+        .menu-section-label {
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 0.45;
+            padding: 12px 20px 6px;
+        }
+
         .menu-item {
-            display: block;
-            padding: 15px 25px;
-            color: white;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: rgba(255,255,255,0.82);
             text-decoration: none;
-            transition: all 0.3s;
-            border-left: 4px solid transparent;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            font-size: 0.9rem;
         }
-        .menu-item:hover, .menu-item.active {
-            background: rgba(255,255,255,0.2);
+
+        .menu-item i { width: 18px; font-size: 0.95rem; flex-shrink: 0; text-align: center; }
+
+        .menu-item:hover {
+            background: rgba(255,255,255,0.1);
             color: white;
             text-decoration: none;
+            border-left-color: rgba(255,255,255,0.5);
+        }
+
+        .menu-item.active {
+            background: rgba(255,255,255,0.15);
+            color: white;
             border-left-color: #fff;
-            transform: translateX(5px);
+            font-weight: 600;
         }
-        .menu-item i { width: 20px; margin-right: 10px; }
+
+        .sidebar-footer {
+            padding: 16px 20px;
+            border-top: 1px solid rgba(255,255,255,0.12);
+            flex-shrink: 0;
+        }
+
+        .btn-logout {
+            width: 100%;
+            background: rgba(255,255,255,0.12);
+            color: white;
+            border: 1.5px solid rgba(255,255,255,0.3);
+            padding: 9px 16px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-logout:hover {
+            background: rgba(255,255,255,0.22);
+            border-color: rgba(255,255,255,0.5);
+            color: white;
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 1040;
+            backdrop-filter: blur(2px);
+        }
+
+        .sidebar-overlay.show { display: block; }
 
         /* ===== MAIN CONTENT ===== */
-        .main-content { margin-left: 280px; flex: 1; min-height: 100vh; }
-        .admin-header {
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== TOPBAR ===== */
+        .topbar {
             background: white;
-            padding: 20px 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            border-bottom: 1px solid #dee2e6;
+            height: 64px;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 0 #e5e7eb;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-        .content-area { padding: 30px; }
-        .breadcrumb { background: transparent; padding: 0; margin-bottom: 10px; }
-        .breadcrumb-item a { color: #28a745; text-decoration: none; }
 
-        /* ===== BACK BUTTON ===== */
-        .back-button {
-            position: fixed;
-            top: 20px; right: 20px;
-            z-index: 1100;
-            background: linear-gradient(45deg, #dc3545, #c82333);
-            color: white;
+        .topbar-left { display: flex; align-items: center; gap: 14px; }
+
+        .hamburger-btn {
+            display: none;
+            background: none;
             border: none;
-            padding: 12px 20px;
-            border-radius: 25px;
+            color: #374151;
+            font-size: 1.25rem;
+            padding: 6px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background 0.15s;
+        }
+
+        .hamburger-btn:hover { background: #f3f4f6; }
+
+        .topbar-breadcrumb { font-size: 0.8rem; color: #6b7280; margin-bottom: 2px; }
+        .topbar-breadcrumb a { color: var(--green-main); text-decoration: none; }
+        .topbar-breadcrumb a:hover { text-decoration: underline; }
+        .topbar-title h2 { font-size: 1.1rem; font-weight: 700; color: #111827; margin: 0; }
+        .topbar-title p { font-size: 0.75rem; color: #6b7280; margin: 0; }
+
+        .topbar-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+        .btn-topbar {
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
             font-weight: 600;
+            font-size: 0.8rem;
             text-decoration: none;
-            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            white-space: nowrap;
+            cursor: pointer;
         }
-        .back-button:hover {
-            background: linear-gradient(45deg, #c82333, #a71e2a);
+
+        .btn-topbar:hover { transform: translateY(-1px); text-decoration: none; }
+
+        .btn-topbar-back {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
             color: white;
-            transform: translateY(-2px);
         }
 
-        /* ===== FADE IN ===== */
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to   { opacity: 1; transform: translateY(0); }
+        .btn-topbar-back:hover { box-shadow: 0 4px 12px rgba(220,38,38,0.35); color: white; }
+
+        .btn-topbar-edit {
+            background: linear-gradient(135deg, #ca8a04, #a16207);
+            color: white;
         }
 
-        /* ===== CARD ===== */
-        .card { border: none; border-radius: 12px; }
-        .card-header {
-            background: #f8f9fa !important;
-            border-radius: 12px 12px 0 0 !important;
-            border-bottom: 1px solid #dee2e6;
+        .btn-topbar-edit:hover { box-shadow: 0 4px 12px rgba(202,138,4,0.35); color: white; }
+
+        .btn-topbar-print {
+            background: linear-gradient(135deg, #0891b2, #0e7490);
+            color: white;
         }
+
+        .btn-topbar-print:hover { box-shadow: 0 4px 12px rgba(8,145,178,0.35); color: white; }
+
+        .btn-topbar-delete {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1.5px solid #fecaca;
+        }
+
+        .btn-topbar-delete:hover { background: #fee2e2; color: #dc2626; }
+
+        /* ===== CONTENT AREA ===== */
+        .content-area { padding: 20px 24px 32px; flex: 1; }
+
+        /* ===== INFO CARD ===== */
+        .info-card {
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 10px rgba(0,0,0,0.04);
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .info-card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .info-card-header-left { display: flex; align-items: center; gap: 10px; }
+
+        .info-card-icon {
+            width: 34px; height: 34px;
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .icon-blue   { background: #eff6ff; color: #2563eb; }
+        .icon-green  { background: #f0fdf4; color: var(--green-main); }
+        .icon-orange { background: #fff7ed; color: #ea580c; }
+        .icon-purple { background: #faf5ff; color: #7c3aed; }
+        .icon-yellow { background: #fefce8; color: #ca8a04; }
+
+        .info-card-header h3 { font-size: 0.9rem; font-weight: 700; color: #111827; margin: 0; }
+        .info-card-header p  { font-size: 0.75rem; color: #6b7280; margin: 0; }
+
+        .info-card-body { padding: 20px; }
 
         /* ===== BADGES ===== */
         .badge-status {
-            padding: 5px 12px;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
         }
-        .badge-pending    { background: #fff3cd; color: #856404; }
-        .badge-processing { background: #d1ecf1; color: #0c5460; }
-        .badge-shipped    { background: #cce5ff; color: #004085; }
-        .badge-delivered  { background: #d4edda; color: #155724; }
-        .badge-cancelled  { background: #f8d7da; color: #721c24; }
-        .badge-paid       { background: #d4edda; color: #155724; }
-        .badge-failed     { background: #f8d7da; color: #721c24; }
+
+        .badge-pending    { background: #fef9c3; color: #854d0e; }
+        .badge-processing { background: #dbeafe; color: #1e40af; }
+        .badge-shipped    { background: #e0f2fe; color: #0c4a6e; }
+        .badge-delivered  { background: #dcfce7; color: #14532d; }
+        .badge-cancelled  { background: #fee2e2; color: #991b1b; }
+        .badge-paid       { background: #dcfce7; color: #14532d; }
+        .badge-failed     { background: #fee2e2; color: #991b1b; }
 
         /* ===== INFO TABLE ===== */
-        .info-table td { padding: 6px 0; border: none; vertical-align: top; }
-        .info-table td:first-child { font-weight: 600; width: 40%; color: #495057; }
+        .detail-row {
+            display: flex;
+            padding: 8px 0;
+            border-bottom: 1px solid #f9fafb;
+            font-size: 0.84rem;
+            gap: 12px;
+        }
+
+        .detail-row:last-child { border-bottom: none; }
+
+        .detail-label {
+            width: 140px;
+            flex-shrink: 0;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .detail-value { color: #111827; flex: 1; }
+
+        /* ===== STATUS UPDATE FORMS ===== */
+        .status-update-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .status-update-item label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .input-group-sm .form-select,
+        .input-group-sm .form-control {
+            font-size: 0.82rem;
+            padding: 7px 10px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .input-group-sm .input-group-text {
+            background: #f9fafb;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 8px 0 0 8px;
+            font-size: 0.8rem;
+            color: #6b7280;
+            border-right: none;
+        }
+
+        .input-group-sm .btn {
+            border-radius: 0 8px 8px 0;
+            font-size: 0.8rem;
+            padding: 7px 12px;
+            border: 1.5px solid transparent;
+        }
+
+        /* ===== ORDER ITEMS TABLE ===== */
+        .items-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+
+        .items-table thead th {
+            background: #f9fafb;
+            padding: 10px 14px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #6b7280;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .items-table tbody td {
+            padding: 12px 14px;
+            border-bottom: 1px solid #f9fafb;
+            color: #374151;
+        }
+
+        .items-table tbody tr:last-child td { border-bottom: none; }
+
+        .items-table tfoot td {
+            padding: 12px 14px;
+            border-top: 2px solid #f3f4f6;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        /* ===== SECTION DIVIDER ===== */
+        .section-divider {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #9ca3af;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f3f4f6;
+            margin-bottom: 16px;
+        }
+
+        /* ===== FADE IN ===== */
+        .fade-in { animation: fadeIn 0.3s ease; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
 
         /* ===== RESPONSIVE ===== */
-        @media (max-width: 768px) {
-            .sidebar { width: 100%; position: relative; }
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); box-shadow: 4px 0 24px rgba(0,0,0,0.2); }
             .main-content { margin-left: 0; }
+            .hamburger-btn { display: flex; align-items: center; justify-content: center; }
+        }
+
+        @media (max-width: 767px) {
+            .content-area { padding: 14px 14px 24px; }
+            .topbar { padding: 0 14px; height: auto; min-height: 58px; flex-wrap: wrap; gap: 8px; padding-top: 10px; padding-bottom: 10px; }
+            .topbar-actions .btn-topbar span { display: none; }
+            .topbar-actions .btn-topbar { padding: 8px 10px; }
+            .detail-label { width: 110px; }
         }
     </style>
 </head>
-
 <body>
 
-{{-- Back to Website --}}
-<a href="{{ route('home') }}" class="back-button">
-    <i class="fas fa-arrow-left me-2"></i>Kembali ke Website
-</a>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
-<div class="admin-container">
-
-    {{-- ===== SIDEBAR ===== --}}
-    <nav class="sidebar">
+    <!-- ===== SIDEBAR ===== -->
+    <nav class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <h3>🌱 Bibit Cabai</h3>
-            <p>Admin Dashboard</p>
-            <small class="text-light">{{ Auth::user()->name ?? 'Admin User' }}</small>
+            <span class="brand-icon">🌱</span>
+            <h3>Bibit Cabai</h3>
+            <p class="subtitle">Admin Dashboard</p>
+            <span class="admin-name">{{ Auth::user()->name ?? 'Admin User' }}</span>
         </div>
         <div class="sidebar-menu">
+            <div class="menu-section-label">Menu Utama</div>
             <a href="{{ route('admin.dashboard') }}" class="menu-item">
-                <i class="fas fa-tachometer-alt"></i>Dashboard
+                <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
             </a>
             <a href="{{ route('admin.products.index') }}" class="menu-item">
-                <i class="fas fa-seedling"></i>Kelola Produk
+                <i class="fas fa-seedling"></i><span>Kelola Produk</span>
             </a>
             <a href="{{ route('admin.orders') }}" class="menu-item active">
-                <i class="fas fa-shopping-cart"></i>Pesanan
+                <i class="fas fa-shopping-cart"></i><span>Pesanan</span>
             </a>
             <a href="{{ route('admin.cancellations') }}" class="menu-item">
-                <i class="fas fa-times-circle"></i>Pengajuan Batal
+                <i class="fas fa-times-circle"></i><span>Pengajuan Batal</span>
             </a>
             <a href="{{ route('admin.users') }}" class="menu-item">
-                <i class="fas fa-users"></i>Pengguna
+                <i class="fas fa-users"></i><span>Pengguna</span>
             </a>
             <a href="{{ route('admin.laporan') }}" class="menu-item">
-                <i class="fas fa-chart-line"></i>Laporan
+                <i class="fas fa-chart-line"></i><span>Laporan</span>
             </a>
-            <!-- <a href="{{ route('admin.settings') }}" class="menu-item">
-                <i class="fas fa-cog"></i>Pengaturan
-            </a> -->
-            <div class="mt-4 px-3">
-                <form method="POST" action="{{ route('admin.logout') }}">
-                    @csrf
-                    <button type="submit" class="btn btn-outline-light btn-sm w-100">
-                        <i class="fas fa-sign-out-alt me-2"></i>Logout
-                    </button>
-                </form>
-            </div>
+        </div>
+        <div class="sidebar-footer">
+            <form method="POST" action="{{ route('admin.logout') }}">
+                @csrf
+                <button type="submit" class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+                </button>
+            </form>
         </div>
     </nav>
 
-    {{-- ===== MAIN CONTENT ===== --}}
+    <!-- ===== MAIN ===== -->
     <div class="main-content">
 
-        {{-- Header --}}
-        <div class="admin-header">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item">
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="hamburger-btn" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="topbar-title">
+                    <div class="topbar-breadcrumb">
                         <a href="{{ route('admin.dashboard') }}"><i class="fas fa-home"></i> Dashboard</a>
-                    </li>
-                    <li class="breadcrumb-item">
-                        <a href="{{ route('admin.orders') }}">Pesanan</a>
-                    </li>
-                    <li class="breadcrumb-item active">{{ $transaksi->invoice_number }}</li>
-                </ol>
-            </nav>
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
+                        &nbsp;/&nbsp;<a href="{{ route('admin.orders') }}">Pesanan</a>
+                        &nbsp;/&nbsp;{{ $transaksi->invoice_number }}
+                    </div>
                     <h2>Order Details</h2>
-                    <p class="mb-0 text-muted">{{ $transaksi->invoice_number }}</p>
-                </div>
-                <div class="d-flex gap-2">
-                    <a href="{{ route('admin.orders') }}" class="btn btn-secondary btn-sm">
-                        <i class="fas fa-arrow-left me-1"></i> Back to Orders
-                    </a>
-                    <a href="{{ route('admin.transaksis.edit', $transaksi->id) }}" class="btn btn-warning btn-sm">
-                        <i class="fas fa-edit me-1"></i> Edit
-                    </a>
-                    <a href="{{ route('admin.transaksis.print', $transaksi->id) }}" class="btn btn-info btn-sm" target="_blank">
-                        <i class="fas fa-print me-1"></i> Print Invoice
-                    </a>
-                    <button type="button" class="btn btn-danger btn-sm"
-                            data-bs-toggle="modal" data-bs-target="#deleteModal">
-                        <i class="fas fa-trash me-1"></i> Delete
-                    </button>
+                    <p>{{ $transaksi->invoice_number }}</p>
                 </div>
             </div>
-        </div>
+            <div class="topbar-actions">
+                <a href="{{ route('admin.orders') }}" class="btn-topbar btn-topbar-back">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Kembali</span>
+                </a>
+                <a href="{{ route('admin.transaksis.edit', $transaksi->id) }}" class="btn-topbar btn-topbar-edit">
+                    <i class="fas fa-edit"></i>
+                    <span>Edit</span>
+                </a>
+                <a href="{{ route('admin.transaksis.print', $transaksi->id) }}" class="btn-topbar btn-topbar-print" target="_blank">
+                    <i class="fas fa-print"></i>
+                    <span>Print</span>
+                </a>
+                <button type="button" class="btn-topbar btn-topbar-delete"
+                        data-bs-toggle="modal" data-bs-target="#deleteModal">
+                    <i class="fas fa-trash"></i>
+                    <span>Hapus</span>
+                </button>
+            </div>
+        </header>
 
-        {{-- Content --}}
+        <!-- Content -->
         <div class="content-area fade-in">
 
             @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show">
+                <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
                     <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
 
             @if(session('error'))
-                <div class="alert alert-danger alert-dismissible fade show">
+                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
                     <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
 
-            <div class="row">
+            <div class="row g-3">
 
-                {{-- ===== KOLOM KIRI (8/12) ===== --}}
+                <!-- ===== KOLOM KIRI (8/12) ===== -->
                 <div class="col-lg-8">
 
-                    {{-- Order Information & Status --}}
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                            <h6 class="m-0 fw-bold text-primary">
-                                <i class="fas fa-file-alt me-2"></i>Order Information
-                            </h6>
+                    <!-- Order Information -->
+                    <div class="info-card">
+                        <div class="info-card-header">
+                            <div class="info-card-header-left">
+                                <div class="info-card-icon icon-blue">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <div>
+                                    <h3>Order Information</h3>
+                                    <p>Detail & status pesanan</p>
+                                </div>
+                            </div>
                             <span class="badge-status badge-{{ $transaksi->order_status }}">
                                 {{ ucfirst($transaksi->order_status) }}
                             </span>
                         </div>
-                        <div class="card-body">
-                            <div class="row">
-                                {{-- Invoice Details --}}
+                        <div class="info-card-body">
+                            <div class="row g-4">
                                 <div class="col-md-6">
-                                    <h6 class="text-primary mb-3">Invoice Details</h6>
-                                    <table class="info-table table table-sm table-borderless">
-                                        <tr>
-                                            <td>Invoice Number:</td>
-                                            <td><strong>{{ $transaksi->invoice_number }}</strong></td>
-                                        </tr>
-                                        <tr>
-                                            <td>Order Date:</td>
-                                            <td>{{ $transaksi->created_at->format('d M Y, H:i') }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Payment Status:</td>
-                                            <td>
-                                                <span class="badge-status badge-{{ $transaksi->payment_status }}">
-                                                    {{ ucfirst($transaksi->payment_status) }}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                        @if($transaksi->tracking_number)
-                                        <tr>
-                                            <td>Tracking Number:</td>
-                                            <td><code>{{ $transaksi->tracking_number }}</code></td>
-                                        </tr>
-                                        @endif
-                                    </table>
+                                    <div class="section-divider">Invoice Details</div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">Invoice</span>
+                                        <span class="detail-value"><strong>{{ $transaksi->invoice_number }}</strong></span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">Tanggal Order</span>
+                                        <span class="detail-value">{{ $transaksi->created_at->format('d M Y, H:i') }}</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">Payment Status</span>
+                                        <span class="detail-value">
+                                            <span class="badge-status badge-{{ $transaksi->payment_status }}">
+                                                {{ ucfirst($transaksi->payment_status) }}
+                                            </span>
+                                        </span>
+                                    </div>
+                                    @if($transaksi->tracking_number)
+                                    <div class="detail-row">
+                                        <span class="detail-label">Tracking No.</span>
+                                        <span class="detail-value"><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:0.8rem;">{{ $transaksi->tracking_number }}</code></span>
+                                    </div>
+                                    @endif
                                 </div>
 
-                                {{-- Update Status --}}
                                 <div class="col-md-6">
-                                    <h6 class="text-primary mb-3">Update Status</h6>
-
-                                    <form action="{{ route('admin.transaksis.update-status', $transaksi->id) }}" method="POST" class="mb-3">
-                                        @csrf
-                                        <label class="form-label fw-semibold small">Order Status</label>
-                                        <div class="input-group input-group-sm">
-                                            <select name="order_status" class="form-select" id="order_status">
-                                                @foreach(['pending','processing','shipped','delivered','cancelled'] as $s)
-                                                    <option value="{{ $s }}" {{ $transaksi->order_status == $s ? 'selected' : '' }}>
-                                                        {{ ucfirst($s) }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            <button type="submit" class="btn btn-primary">
-                                                <i class="fas fa-save"></i>
-                                            </button>
+                                    <div class="section-divider">Update Status</div>
+                                    <div class="status-update-group">
+                                        <div class="status-update-item">
+                                            <label>Order Status</label>
+                                            <form action="{{ route('admin.transaksis.update-status', $transaksi->id) }}" method="POST">
+                                                @csrf
+                                                <div class="input-group input-group-sm">
+                                                    <span class="input-group-text"><i class="fas fa-box"></i></span>
+                                                    <select name="order_status" class="form-select" id="order_status">
+                                                        @foreach(['pending','processing','shipped','delivered','cancelled'] as $s)
+                                                            <option value="{{ $s }}" {{ $transaksi->order_status == $s ? 'selected' : '' }}>
+                                                                {{ ucfirst($s) }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                    <button type="submit" class="btn btn-primary" style="border-radius:0 8px 8px 0;">
+                                                        <i class="fas fa-save"></i>
+                                                    </button>
+                                                </div>
+                                            </form>
                                         </div>
-                                    </form>
-
-                                    <form action="{{ route('admin.transaksis.update-payment-status', $transaksi->id) }}" method="POST">
-                                        @csrf
-                                        <label class="form-label fw-semibold small">Payment Status</label>
-                                        <div class="input-group input-group-sm">
-                                            <select name="payment_status" class="form-select" id="payment_status">
-                                                @foreach(['pending','paid','failed'] as $p)
-                                                    <option value="{{ $p }}" {{ $transaksi->payment_status == $p ? 'selected' : '' }}>
-                                                        {{ ucfirst($p) }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            <button type="submit" class="btn btn-success">
-                                                <i class="fas fa-save"></i>
-                                            </button>
+                                        <div class="status-update-item">
+                                            <label>Payment Status</label>
+                                            <form action="{{ route('admin.transaksis.update-payment-status', $transaksi->id) }}" method="POST">
+                                                @csrf
+                                                <div class="input-group input-group-sm">
+                                                    <span class="input-group-text"><i class="fas fa-credit-card"></i></span>
+                                                    <select name="payment_status" class="form-select" id="payment_status">
+                                                        @foreach(['pending','paid','failed'] as $p)
+                                                            <option value="{{ $p }}" {{ $transaksi->payment_status == $p ? 'selected' : '' }}>
+                                                                {{ ucfirst($p) }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                    <button type="submit" class="btn btn-success" style="border-radius:0 8px 8px 0;">
+                                                        <i class="fas fa-save"></i>
+                                                    </button>
+                                                </div>
+                                            </form>
                                         </div>
-                                    </form>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {{-- Order Items --}}
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 fw-bold text-primary">
-                                <i class="fas fa-box me-2"></i>Order Items
-                            </h6>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-bordered mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>#</th>
-                                            <th>Product</th>
-                                            <th class="text-center">Price</th>
-                                            <th class="text-center">Qty</th>
-                                            <th class="text-end">Subtotal</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($transaksi->details as $index => $detail)
-                                        <tr>
-                                            <td>{{ $index + 1 }}</td>
-                                            <td><strong>{{ $detail->product->name ?? 'Product Not Found' }}</strong></td>
-                                            <td class="text-center">Rp {{ number_format($detail->price, 0, ',', '.') }}</td>
-                                            <td class="text-center">{{ $detail->quantity }}</td>
-                                            <td class="text-end">Rp {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
-                                        </tr>
-                                        @endforeach
-                                    </tbody>
-                                    <tfoot class="table-light">
-                                        <tr>
-                                            <th colspan="4" class="text-end">Total Amount:</th>
-                                            <th class="text-end text-success">
-                                                Rp {{ number_format($transaksi->total_amount, 0, ',', '.') }}
-                                            </th>
-                                        </tr>
-                                    </tfoot>
-                                </table>
+                    <!-- Order Items -->
+                    <div class="info-card">
+                        <div class="info-card-header">
+                            <div class="info-card-header-left">
+                                <div class="info-card-icon icon-green">
+                                    <i class="fas fa-box"></i>
+                                </div>
+                                <div>
+                                    <h3>Order Items</h3>
+                                    <p>Daftar produk dalam pesanan</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
-
-                </div>
-                {{-- Akhir col-lg-8 --}}
-
-                {{-- ===== KOLOM KANAN (4/12) ===== --}}
-                <div class="col-lg-4">
-
-                    {{-- Customer Information --}}
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 fw-bold text-primary">
-                                <i class="fas fa-user me-2"></i>Customer Information
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            <table class="info-table table table-sm table-borderless">
-                                <tr>
-                                    <td><i class="fas fa-user text-success me-1"></i> Name:</td>
-                                    <td>{{ $transaksi->customer_name }}</td>
-                                </tr>
-                                <tr>
-                                    <td><i class="fas fa-phone text-success me-1"></i> Phone:</td>
-                                    <td>{{ $transaksi->customer_phone }}</td>
-                                </tr>
-                                <tr>
-                                    <td><i class="fas fa-envelope text-success me-1"></i> Email:</td>
-                                    <td>{{ $transaksi->customer_email ?? '-' }}</td>
-                                </tr>
+                        <div style="overflow-x:auto;">
+                            <table class="items-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Produk</th>
+                                        <th class="text-center">Harga</th>
+                                        <th class="text-center">Qty</th>
+                                        <th class="text-end">Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($transaksi->details as $index => $detail)
+                                    <tr>
+                                        <td style="color:#9ca3af;font-size:0.78rem;">{{ $index + 1 }}</td>
+                                        <td><strong>{{ $detail->product->name ?? 'Product Not Found' }}</strong></td>
+                                        <td class="text-center">Rp {{ number_format($detail->price, 0, ',', '.') }}</td>
+                                        <td class="text-center">
+                                            <span style="background:#f3f4f6;padding:2px 10px;border-radius:12px;font-size:0.8rem;font-weight:600;">
+                                                {{ $detail->quantity }}
+                                            </span>
+                                        </td>
+                                        <td class="text-end" style="font-weight:600;">Rp {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="4" class="text-end" style="color:#6b7280;font-size:0.84rem;">Total Amount</td>
+                                        <td class="text-end" style="color:var(--green-main);font-size:1rem;">
+                                            Rp {{ number_format($transaksi->total_amount, 0, ',', '.') }}
+                                        </td>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
                     </div>
 
-                    {{-- Shipping Information --}}
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 fw-bold text-primary">
-                                <i class="fas fa-truck me-2"></i>Shipping Information
-                            </h6>
+                </div>
+                <!-- Akhir col-lg-8 -->
+
+                <!-- ===== KOLOM KANAN (4/12) ===== -->
+                <div class="col-lg-4">
+
+                    <!-- Customer Information -->
+                    <div class="info-card">
+                        <div class="info-card-header">
+                            <div class="info-card-header-left">
+                                <div class="info-card-icon icon-purple">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div>
+                                    <h3>Customer</h3>
+                                    <p>Informasi pembeli</p>
+                                </div>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <p class="fw-semibold small text-muted mb-1">Shipping Address</p>
-                            <address class="mb-3" style="line-height:1.7;">
+                        <div class="info-card-body">
+                            <div class="detail-row">
+                                <span class="detail-label"><i class="fas fa-user text-success me-1" style="font-size:0.75rem;"></i> Nama</span>
+                                <span class="detail-value">{{ $transaksi->customer_name }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label"><i class="fas fa-phone text-success me-1" style="font-size:0.75rem;"></i> Telepon</span>
+                                <span class="detail-value">{{ $transaksi->customer_phone }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label"><i class="fas fa-envelope text-success me-1" style="font-size:0.75rem;"></i> Email</span>
+                                <span class="detail-value">{{ $transaksi->customer_email ?? '-' }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Shipping Information -->
+                    <div class="info-card">
+                        <div class="info-card-header">
+                            <div class="info-card-header-left">
+                                <div class="info-card-icon icon-orange">
+                                    <i class="fas fa-truck"></i>
+                                </div>
+                                <div>
+                                    <h3>Pengiriman</h3>
+                                    <p>Alamat & info pengiriman</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-card-body">
+                            <p style="font-size:0.75rem;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Alamat Pengiriman</p>
+                            <address style="font-size:0.84rem;color:#374151;line-height:1.7;margin-bottom:12px;font-style:normal;">
                                 {{ $transaksi->shipping_address }}<br>
                                 {{ $transaksi->city }}, {{ $transaksi->province }}<br>
                                 {{ $transaksi->postal_code }}
                             </address>
-
                             @if($transaksi->shipping_method)
-                                <p class="fw-semibold small text-muted mb-1">Shipping Method</p>
-                                <p class="mb-3">{{ $transaksi->shipping_method }}</p>
+                            <div class="detail-row">
+                                <span class="detail-label">Metode</span>
+                                <span class="detail-value">{{ $transaksi->shipping_method }}</span>
+                            </div>
                             @endif
-
                             @if($transaksi->tracking_number)
-                                <p class="fw-semibold small text-muted mb-1">Tracking Number</p>
-                                <p class="mb-0"><code class="bg-light px-2 py-1 rounded">{{ $transaksi->tracking_number }}</code></p>
+                            <div class="detail-row">
+                                <span class="detail-label">Tracking</span>
+                                <span class="detail-value"><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:0.78rem;">{{ $transaksi->tracking_number }}</code></span>
+                            </div>
                             @endif
                         </div>
                     </div>
 
-                    {{-- Notes --}}
+                    <!-- Notes -->
                     @if($transaksi->notes)
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 fw-bold text-primary">
-                                <i class="fas fa-sticky-note me-2"></i>Notes
-                            </h6>
+                    <div class="info-card">
+                        <div class="info-card-header">
+                            <div class="info-card-header-left">
+                                <div class="info-card-icon icon-yellow">
+                                    <i class="fas fa-sticky-note"></i>
+                                </div>
+                                <div>
+                                    <h3>Catatan</h3>
+                                    <p>Catatan tambahan pesanan</p>
+                                </div>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <p class="mb-0">{{ $transaksi->notes }}</p>
+                        <div class="info-card-body">
+                            <p style="font-size:0.84rem;color:#374151;margin:0;">{{ $transaksi->notes }}</p>
                         </div>
                     </div>
                     @endif
 
                 </div>
-                {{-- Akhir col-lg-4 --}}
+                <!-- Akhir col-lg-4 -->
 
             </div>
         </div>
-        {{-- Akhir content-area --}}
-
     </div>
-    {{-- Akhir main-content --}}
 
-</div>
-{{-- Akhir admin-container --}}
-
-{{-- ===== DELETE MODAL ===== --}}
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="deleteModalLabel">
-                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Delete
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete this order?</p>
-                <p><strong>Invoice: {{ $transaksi->invoice_number }}</strong></p>
-                <p class="text-danger mb-0">
-                    <i class="fas fa-exclamation-triangle me-1"></i> This action cannot be undone!
-                </p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form action="{{ route('admin.transaksis.destroy', $transaksi->id) }}" method="POST" class="d-inline">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash me-1"></i> Delete Order
-                    </button>
-                </form>
+    <!-- ===== DELETE MODAL ===== -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border:none;border-radius:14px;overflow:hidden;">
+                <div class="modal-header" style="background:#dc2626;color:white;border:none;">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Konfirmasi Hapus
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="padding:24px;">
+                    <p style="color:#374151;margin-bottom:8px;">Apakah Anda yakin ingin menghapus pesanan ini?</p>
+                    <p style="font-weight:700;color:#111827;margin-bottom:12px;">Invoice: {{ $transaksi->invoice_number }}</p>
+                    <p style="color:#dc2626;font-size:0.84rem;margin:0;">
+                        <i class="fas fa-exclamation-triangle me-1"></i> Tindakan ini tidak dapat dibatalkan!
+                    </p>
+                </div>
+                <div class="modal-footer" style="border:none;padding:16px 24px;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <form action="{{ route('admin.transaksis.destroy', $transaksi->id) }}" method="POST" class="d-inline">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash me-1"></i> Hapus Pesanan
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    // Auto-confirm saat status berubah
-    document.getElementById('order_status').addEventListener('change', function () {
-        if (confirm('Update order status to "' + this.value + '"?')) {
-            this.form.submit();
-        } else {
-            this.form.reset();
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebarOverlay').classList.toggle('show');
         }
-    });
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('show');
+        }
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 900) closeSidebar();
+        });
 
-    document.getElementById('payment_status').addEventListener('change', function () {
-        if (confirm('Update payment status to "' + this.value + '"?')) {
-            this.form.submit();
-        } else {
-            this.form.reset();
-        }
-    });
-</script>
+        document.getElementById('order_status').addEventListener('change', function () {
+            if (confirm('Update order status to "' + this.value + '"?')) {
+                this.form.submit();
+            } else {
+                this.form.reset();
+            }
+        });
+
+        document.getElementById('payment_status').addEventListener('change', function () {
+            if (confirm('Update payment status to "' + this.value + '"?')) {
+                this.form.submit();
+            } else {
+                this.form.reset();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.alert').forEach(function(alert) {
+                setTimeout(function() {
+                    const a = bootstrap.Alert.getOrCreateInstance(alert);
+                    if (a) a.close();
+                }, 5000);
+            });
+        });
+    </script>
 </body>
 </html>

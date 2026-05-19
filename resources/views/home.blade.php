@@ -4,27 +4,74 @@
 
 @section('styles')
 <style>
+    /* ── Hero Section ───────────────────────────── */
+    .hero-image {
+        max-height: 400px;
+        object-fit: cover;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        width: 100%;
+    }
+
+    /* Mobile: gambar naik ke atas, teks di bawah */
+    @media (max-width: 767.98px) {
+        .hero-section {
+            text-align: center;
+            padding-top: 30px !important;
+            padding-bottom: 30px !important;
+        }
+        .hero-img-col {
+            order: -1;
+            margin-bottom: 20px;
+        }
+        .hero-image {
+            max-height: 200px;
+            border-radius: 10px;
+        }
+        .hero-section h1 {
+            font-size: 1.8rem !important;
+        }
+        .hero-section p.lead {
+            font-size: 0.95rem;
+        }
+        .hero-section .btn {
+            width: 100%;
+            max-width: 300px;
+        }
+    }
+
+    /* ── Product Card ───────────────────────────── */
     .product-card {
         transition: transform 0.3s ease, box-shadow 0.3s ease;
         border: none;
         box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-    
     .product-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 5px 25px rgba(0,0,0,0.15);
     }
-    
     .product-image {
         height: 250px;
         object-fit: cover;
         transition: transform 0.3s ease;
+        width: 100%;
     }
-    
     .product-card:hover .product-image {
         transform: scale(1.05);
     }
-    
+    @media (max-width: 575.98px) {
+        .product-image {
+            height: 150px;
+        }
+        .card-body {
+            padding: 10px;
+        }
+        .card-title {
+            font-size: 0.85rem;
+            margin-bottom: 4px !important;
+        }
+    }
+
     .badge-bestseller {
         position: absolute;
         top: 10px;
@@ -38,20 +85,30 @@
         z-index: 2;
         box-shadow: 0 2px 10px rgba(238, 90, 36, 0.3);
     }
-    
+
     .price-text {
         font-size: 1.3rem;
         font-weight: bold;
         color: #28a745;
     }
-    
-    .hero-image {
-        max-height: 400px;
-        object-fit: cover;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    @media (max-width: 575.98px) {
+        .price-text {
+            font-size: 0.95rem;
+            margin-bottom: 6px !important;
+        }
+        /* Sembunyikan teks "Terjual" di mobile agar tidak penuh */
+        .sold-label { display: none; }
+        /* Quantity input lebih kecil */
+        .quantity-input { width: 40px !important; font-size: 0.85rem; }
+        .input-group .btn { padding: 4px 8px; font-size: 0.8rem; }
+        .btn { font-size: 0.8rem; }
+        /* Section title */
+        .display-5 { font-size: 1.4rem !important; }
+        /* Feature icon lebih kecil */
+        .feature-icon-circle { width: 56px !important; height: 56px !important; }
+        .feature-icon-circle .fa-2x { font-size: 1.2rem !important; }
     }
-    
+
     .quantity-input {
         width: 80px;
         text-align: center;
@@ -62,17 +119,17 @@
 @section('content')
 <div class="container-fluid p-0">
     <!-- Hero Section -->
-    <section class="bg-success text-white py-5">
+    <section class="bg-success text-white py-5 hero-section">
         <div class="container">
             <div class="row align-items-center">
-                <div class="col-lg-6">
+                <div class="col-lg-6 col-md-6 col-12">
                     <h1 class="display-4 fw-bold mb-4">Bibit Cabai Berkualitas</h1>
                     <p class="lead mb-4">Dapatkan bibit cabai terbaik dari Bondowoso untuk hasil panen yang optimal.</p>
                     <a href="{{ route('products.best-selling') }}" class="btn btn-light btn-lg">
                         <i class="fas fa-fire me-2"></i>Lihat Produk Terlaris
                     </a>
                 </div>
-                <div class="col-lg-6 text-center">
+                <div class="col-lg-6 col-md-6 col-12 text-center hero-img-col">
                     <img src="{{ asset('images/bara f1.jpeg') }}" 
                          alt="Bibit Cabai" 
                          class="img-fluid hero-image"
@@ -93,7 +150,7 @@
             @if($featuredProducts->count() > 0)
             <div class="row g-4">
                 @foreach($featuredProducts as $product)
-                <div class="col-lg-4 col-md-6">
+                <div class="col-lg-4 col-md-6 col-6">
                     <div class="card product-card h-100 position-relative">
                         @if($product->total_sold > 0)
                         <div class="badge-bestseller">
@@ -114,7 +171,7 @@
                             <div class="price-text mb-3">Rp {{ number_format($product->price, 0, ',', '.') }}</div>
                             
                             @if($product->total_sold > 0)
-                            <small class="text-muted mb-3">
+                            <small class="text-muted mb-3 sold-label">
                                 <i class="fas fa-chart-line me-1"></i>
                                 Terjual: {{ number_format($product->total_sold) }} bibit
                             </small>
@@ -198,6 +255,7 @@
             @endif
         </div>
     </section>
+
   <!-- Semua Produk Section -->
     <section class="py-5 bg-white">
         <div class="container">
@@ -208,7 +266,7 @@
 
             <div class="row g-4">
                 @foreach($allProducts as $product)
-                <div class="col-lg-4 col-md-6">
+                <div class="col-lg-4 col-md-6 col-6">
                     <div class="card product-card h-100 position-relative">
                         <div class="overflow-hidden">
                             <img src="{{ $product->image ? asset('storage/' . $product->image) : 'https://via.placeholder.com/300x250/28a745/ffffff?text=' . urlencode($product->name) }}"
@@ -269,40 +327,30 @@
     </section>
 
     <!-- Features Section -->
-    <!-- Features Section -->
     <section class="py-5 bg-white">
         <div class="container">
             <div class="row g-4">
-                <div class="col-lg-3 col-md-6">
+                <div class="col-lg-3 col-md-6 col-6">
                     <div class="text-center">
-                        <div class="bg-success text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <div class="bg-success text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center feature-icon-circle" style="width: 80px; height: 80px;">
                             <i class="fas fa-seedling fa-2x"></i>
                         </div>
                         <h5>Bibit Berkualitas</h5>
                         <p class="text-muted">Bibit pilihan dengan kualitas terjamin dan hasil optimal.</p>
                     </div>
                 </div>
-                <div class="col-lg-3 col-md-6">
+                <div class="col-lg-3 col-md-6 col-6">
                     <div class="text-center">
-                        <div class="bg-success text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <div class="bg-success text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center feature-icon-circle" style="width: 80px; height: 80px;">
                             <i class="fas fa-truck fa-2x"></i>
                         </div>
                         <h5>Pengiriman Cepat</h5>
                         <p class="text-muted">Pengiriman ke seluruh kabupaten Bondowoso dengan packaging aman.</p>
                     </div>
                 </div>
-                <!-- <div class="col-lg-3 col-md-6">
+                <div class="col-lg-3 col-md-6 col-6">
                     <div class="text-center">
-                        <div class="bg-success text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
-                            <i class="fas fa-medal fa-2x"></i>
-                        </div>
-                        <h5>Garansi Tumbuh</h5>
-                        <p class="text-muted">Garansi bibit tumbuh atau uang kembali 100%.</p>
-                    </div>
-                </div> -->
-                <div class="col-lg-3 col-md-6">
-                    <div class="text-center">
-                        <div class="bg-success text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <div class="bg-success text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center feature-icon-circle" style="width: 80px; height: 80px;">
                             <i class="fas fa-headset fa-2x"></i>
                         </div>
                         <h5>Support 24/7</h5>
