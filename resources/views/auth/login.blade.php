@@ -74,7 +74,11 @@
                                 <small>Password minimal 8 karakter dan tidak boleh mengandung spasi</small>
                             </div>
                         </div>
-
+<div class="text-end mb-3">
+    <a href="{{ route('password.request') }}" class="text-success text-decoration-none small">
+        <i class="fas fa-question-circle me-1"></i>Lupa Password?
+    </a>
+</div>
                         <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input @error('remember') is-invalid @enderror" id="remember" name="remember" required>
                             <label class="form-check-label" for="remember">

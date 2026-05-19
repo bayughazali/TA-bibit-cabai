@@ -4,488 +4,485 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Kelola Pengguna - Admin</title>
+    <title>Kelola Pengguna - Bibit Cabai Admin</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f8f9fa;
+        }
+
+        .admin-container {
+            display: flex;
             min-height: 100vh;
-            padding: 20px;
         }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #28a745, #20c997);
+            color: white;
+            min-height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
         }
 
-        .header {
-            background: white;
-            padding: 25px 30px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .sidebar-header {
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
-        .header h1 {
-            color: #333;
-            font-size: 28px;
+        .sidebar-header h3 {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
         }
 
-        .header-actions {
-            display: flex;
-            gap: 10px;
-        }
+        .sidebar-header p { opacity: 0.8; font-size: 0.9rem; }
 
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
+        .sidebar-menu { padding: 20px 0; }
+
+        .menu-item {
+            display: block;
+            padding: 15px 25px;
+            color: white;
             text-decoration: none;
             transition: all 0.3s;
-            display: inline-block;
+            border-left: 4px solid transparent;
         }
 
-        .btn-primary {
-            background: #667eea;
+        .menu-item:hover, .menu-item.active {
+            background: rgba(255,255,255,0.2);
             color: white;
+            text-decoration: none;
+            border-left-color: #fff;
+            transform: translateX(5px);
         }
 
-        .btn-primary:hover {
-            background: #5568d3;
+        .menu-item i { width: 20px; margin-right: 10px; }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            flex: 1;
+            min-height: 100vh;
         }
 
-        .btn-danger {
-            background: #e74c3c;
-            color: white;
+        .admin-header {
+            background: white;
+            padding: 20px 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-bottom: 1px solid #dee2e6;
         }
 
-        .btn-danger:hover {
-            background: #c0392b;
+        .content-area { padding: 30px; }
+
+        .page-header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
         }
 
-        .alert {
-            padding: 15px 20px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
+        .breadcrumb { background: transparent; padding: 0; margin-bottom: 10px; }
+        .breadcrumb-item a { color: #28a745; text-decoration: none; }
 
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .stats {
+        /* Stats Cards */
+        .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(4, 1fr);
             gap: 20px;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
         }
 
         .stat-card {
             background: white;
+            border-radius: 12px;
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        .stat-card h3 {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-        }
-
-        .stat-card .number {
-            color: #667eea;
-            font-size: 32px;
-            font-weight: bold;
-        }
-
-        .content {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .search-bar {
-            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             display: flex;
-            gap: 10px;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid;
+        }
+
+        .stat-card.primary { border-left-color: #007bff; }
+        .stat-card.warning { border-left-color: #ffc107; }
+        .stat-card.info    { border-left-color: #17a2b8; }
+        .stat-card.success { border-left-color: #28a745; }
+
+        .stat-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .stat-card.primary .stat-label { color: #007bff; }
+        .stat-card.warning .stat-label { color: #ffc107; }
+        .stat-card.info    .stat-label { color: #17a2b8; }
+        .stat-card.success .stat-label { color: #28a745; }
+
+        .stat-value { font-size: 1.5rem; font-weight: 700; color: #333; }
+        .stat-icon  { font-size: 2rem; color: #dee2e6; }
+
+        /* Section Header */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f8f9fa;
+        }
+
+        .section-title { font-size: 1.3rem; font-weight: 600; color: #333; }
+
+        /* Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .data-table th, .data-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .data-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.85rem;
+        }
+
+        .data-table tbody tr:hover { background-color: #f8f9fc; }
+
+        /* Badges */
+        .badge-role {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-admin    { background: #cce5ff; color: #004085; }
+        .badge-user     { background: #d4edda; color: #155724; }
+        .badge-verified { background: #d4edda; color: #155724; }
+        .badge-unverified { background: #e2e3e5; color: #383d41; }
+
+        /* Action Buttons */
+        .btn-action {
+            padding: 6px 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
             align-items: center;
         }
 
-        .search-bar input {
-            flex: 1;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 5px;
-            font-size: 14px;
-            transition: border-color 0.3s;
+        .btn-action:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            text-decoration: none;
+            color: inherit;
         }
 
-        .search-bar input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
+        .btn-view   { background: #17a2b8; color: white; }
+        .btn-edit   { background: #ffc107; color: #212529; }
+        .btn-delete { background: #dc3545; color: white; }
 
-        .search-bar button {
-            background: #667eea;
+        /* Back Button */
+        .back-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1100;
+            background: linear-gradient(45deg, #dc3545, #c82333);
             color: white;
-            padding: 12px 25px;
             border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background 0.3s;
-        }
-
-        .search-bar button:hover {
-            background: #5568d3;
-        }
-
-        .table-responsive {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        thead {
-            background: #f8f9fa;
-        }
-
-        th {
-            padding: 15px;
-            text-align: left;
+            padding: 12px 20px;
+            border-radius: 25px;
             font-weight: 600;
-            color: #333;
-            border-bottom: 2px solid #e0e0e0;
-        }
-
-        td {
-            padding: 15px;
-            border-bottom: 1px solid #f0f0f0;
-            color: #666;
-        }
-
-        tr:hover {
-            background: #f8f9fa;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .badge-admin {
-            background: #667eea;
-            color: white;
-        }
-
-        .badge-user {
-            background: #27ae60;
-            color: white;
-        }
-
-        .badge-verified {
-            background: #2ecc71;
-            color: white;
-        }
-
-        .badge-unverified {
-            background: #95a5a6;
-            color: white;
-        }
-
-        .action-btn {
-            padding: 6px 12px;
-            margin: 0 3px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
             transition: all 0.3s;
             text-decoration: none;
-            display: inline-block;
         }
 
-        .btn-edit {
-            background: #3498db;
+        .back-button:hover {
+            background: linear-gradient(45deg, #c82333, #a71e2a);
+            transform: translateY(-2px);
             color: white;
-        }
-
-        .btn-edit:hover {
-            background: #2980b9;
-        }
-
-        .btn-delete {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .btn-delete:hover {
-            background: #c0392b;
-        }
-
-        .btn-view {
-            background: #95a5a6;
-            color: white;
-        }
-
-        .btn-view:hover {
-            background: #7f8c8d;
-        }
-
-        .pagination {
-            margin-top: 20px;
-            display: flex;
-            justify-content: center;
-            gap: 5px;
-        }
-
-        .pagination a, .pagination span {
-            padding: 8px 12px;
-            border: 1px solid #e0e0e0;
-            border-radius: 4px;
-            color: #667eea;
             text-decoration: none;
-            transition: all 0.3s;
         }
 
-        .pagination a:hover {
-            background: #667eea;
-            color: white;
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
         }
 
-        .pagination .active {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
-
-        .empty-state i {
-            font-size: 48px;
-            margin-bottom: 10px;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
         @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-            }
-
-            .header-actions {
-                flex-direction: column;
-                width: 100%;
-            }
-
-            .btn {
-                width: 100%;
-            }
-
-            table {
-                font-size: 12px;
-            }
-
-            th, td {
-                padding: 10px 5px;
-            }
+            .sidebar { width: 100%; position: relative; }
+            .main-content { margin-left: 0; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
+
 <body>
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <div>
-                <h1>👥 Kelola Pengguna</h1>
-                <p style="color: #666; margin-top: 5px;">Dashboard Admin - TA Bibit Cabai</p>
-            </div>
-            <div class="header-actions">
-                <a href="{{ route('admin.users.create') }}" class="btn btn-primary">+ Tambah Pengguna</a>
-                <a href="{{ route('admin.dashboard') }}" class="btn btn-primary">← Dashboard</a>
-                <form method="POST" action="{{ route('logout') }}" style="display: inline;">
-                    @csrf
-                    <button type="submit" class="btn btn-danger">Logout</button>
-                </form>
-            </div>
-        </div>
+    <!-- Back Button -->
+    <a href="{{ route('home') }}" class="back-button">
+        <i class="fas fa-arrow-left me-2"></i>Kembali ke Website
+    </a>
 
-        <!-- Alert Messages -->
-        @if(session('success'))
-        <div class="alert alert-success">
-            ✓ {{ session('success') }}
-        </div>
-        @endif
-
-        @if(session('error'))
-        <div class="alert alert-error">
-            ✗ {{ session('error') }}
-        </div>
-        @endif
-
-        <!-- Stats Cards -->
-        <div class="stats">
-            <div class="stat-card">
-                <h3>Total Pengguna</h3>
-                <div class="number">{{ $totalUsers ?? 0 }}</div>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h3>🌱 Bibit Cabai</h3>
+                <p>Admin Dashboard</p>
+                <small class="text-light">{{ Auth::user()->name ?? 'Admin User' }}</small>
             </div>
-            <div class="stat-card">
-                <h3>Admin</h3>
-                <div class="number">{{ $totalAdmins ?? 0 }}</div>
+            <div class="sidebar-menu">
+                <a href="{{ route('admin.dashboard') }}" class="menu-item">
+                    <i class="fas fa-tachometer-alt"></i>Dashboard
+                </a>
+                <a href="{{ route('admin.products.index') }}" class="menu-item">
+                    <i class="fas fa-seedling"></i>Kelola Produk
+                </a>
+                <a href="{{ route('admin.orders') }}" class="menu-item">
+                    <i class="fas fa-shopping-cart"></i>Pesanan
+                </a>
+                 {{-- ↓ TAMBAHKAN DI SINI ↓ --}}
+                <a href="{{ route('admin.cancellations') }}" class="menu-item">
+                    <i class="fas fa-times-circle"></i>Pengajuan Batal
+                </a>
+                <a href="{{ route('admin.users') }}" class="menu-item active">
+                    <i class="fas fa-users"></i>Pengguna
+                </a>
+                <a href="{{ route('admin.laporan') }}" class="menu-item">
+                    <i class="fas fa-chart-line"></i>Laporan
+                </a>
+                <!-- <a href="{{ route('admin.settings') }}" class="menu-item">
+                    <i class="fas fa-cog"></i>Pengaturan
+                </a> -->
+                <div class="mt-4 px-3">
+                    <form method="POST" action="{{ route('admin.logout') }}">
+                        @csrf
+                        <button type="submit" class="btn btn-outline-light btn-sm w-100">
+                            <i class="fas fa-sign-out-alt me-2"></i>Logout
+                        </button>
+                    </form>
+                </div>
             </div>
-            <div class="stat-card">
-                <h3>Email Terverifikasi</h3>
-                <div class="number">{{ $verifiedUsers ?? 0 }}</div>
-            </div>
-            <div class="stat-card">
-                <h3>Pengguna Aktif (30 Hari)</h3>
-                <div class="number">{{ $activeUsers ?? 0 }}</div>
-            </div>
-        </div>
+        </nav>
 
         <!-- Main Content -->
-        <div class="content">
-            <!-- Search Bar -->
-            <div class="search-bar">
-                <input type="text" id="searchInput" placeholder="🔍 Cari pengguna berdasarkan nama, email, atau nomor telepon...">
-                <button onclick="searchUsers()">Cari</button>
+        <div class="main-content">
+            <div class="admin-header">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{{ route('admin.dashboard') }}">
+                                <i class="fas fa-home"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">Pengguna</li>
+                    </ol>
+                </nav>
+                <h2>Kelola Pengguna</h2>
+                <p class="mb-0">Kelola semua pengguna terdaftar di sini!</p>
             </div>
 
-            <!-- Users Table -->
-            @if(isset($users) && $users->count() > 0)
-            <div class="table-responsive">
-                <table id="usersTable">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Nama</th>
-                            <th>Email</th>
-                            <th>Telepon</th>
-                            <th>Alamat</th>
-                            <th>Status</th>
-                            <th>Verifikasi</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($users as $user)
-                        <tr>
-                            <td>{{ $user->id }}</td>
-                            <td><strong>{{ $user->name }}</strong></td>
-                            <td>{{ $user->email }}</td>
-                            <td>{{ $user->phone ?? '-' }}</td>
-                            <td>{{ Str::limit($user->address ?? '-', 30) }}</td>
-                            <td>
-                                @if($user->is_admin == 1)
-                                    <span class="badge badge-admin">Admin</span>
-                                @else
-                                    <span class="badge badge-user">User</span>
-                                @endif
-                            </td>
-                            <td>
-                                @if($user->email_verified_at)
-                                    <span class="badge badge-verified">✓ Terverifikasi</span>
-                                @else
-                                    <span class="badge badge-unverified">Belum Verifikasi</span>
-                                @endif
-                            </td>
-                            <td>
-                                <a href="{{ route('admin.users.show', $user) }}" class="action-btn btn-view">Detail</a>
-                                <a href="{{ route('admin.users.edit', $user) }}" class="action-btn btn-edit">Edit</a>
-                                <form method="POST" action="{{ route('admin.users.destroy', $user) }}" style="display: inline;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus pengguna ini?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="action-btn btn-delete">Hapus</button>
-                                </form>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+            <div class="content-area fade-in">
 
-            <!-- Pagination -->
-            @if(isset($users))
-            <div class="pagination">
-                {{ $users->links() }}
+                @if(session('success'))
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                @endif
+
+                @if(session('error'))
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                @endif
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card primary">
+                        <div>
+                            <div class="stat-label">Total Pengguna</div>
+                            <div class="stat-value">{{ $totalUsers ?? 0 }}</div>
+                        </div>
+                        <div class="stat-icon"><i class="fas fa-users"></i></div>
+                    </div>
+                    <div class="stat-card warning">
+                        <div>
+                            <div class="stat-label">Admin</div>
+                            <div class="stat-value">{{ $totalAdmins ?? 0 }}</div>
+                        </div>
+                        <div class="stat-icon"><i class="fas fa-user-shield"></i></div>
+                    </div>
+                    <div class="stat-card success">
+                        <div>
+                            <div class="stat-label">Email Terverifikasi</div>
+                            <div class="stat-value">{{ $verifiedUsers ?? 0 }}</div>
+                        </div>
+                        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                    </div>
+                    <div class="stat-card info">
+                        <div>
+                            <div class="stat-label">Aktif (30 Hari)</div>
+                            <div class="stat-value">{{ $activeUsers ?? 0 }}</div>
+                        </div>
+                        <div class="stat-icon"><i class="fas fa-user-clock"></i></div>
+                    </div>
+                </div>
+
+                <!-- Users Table -->
+                <div class="page-header">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-users text-success me-2"></i>
+                            Daftar Pengguna ({{ $totalUsers ?? 0 }})
+                        </h3>
+                        <a href="{{ route('admin.users.create') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus me-1"></i>Tambah Pengguna
+                        </a>
+                    </div>
+
+                    <!-- Search -->
+                    <div class="mb-3">
+                        <div class="input-group" style="max-width: 400px;">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" id="searchInput"
+                                   placeholder="Cari nama, email, atau telepon...">
+                        </div>
+                    </div>
+
+                    @if(isset($users) && $users->count() > 0)
+                    <div class="table-responsive">
+                        <table class="data-table" id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nama</th>
+                                    <th>Email</th>
+                                    <th>Telepon</th>
+                                    <th>Alamat</th>
+                                    <th>Role</th>
+                                    <th>Verifikasi</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($users as $user)
+                                <tr>
+                                   <td>{{ ($users->currentPage() - 1) * $users->perPage() + $loop->iteration }}</td>
+                                    <td><strong>{{ $user->name }}</strong></td>
+                                    <td>{{ $user->email }}</td>
+                                    <td>{{ $user->phone ?? '-' }}</td>
+                                    <td><small>{{ \Illuminate\Support\Str::limit($user->address ?? '-', 30) }}</small></td>
+                                    <td>
+                                        @if($user->is_admin == 1)
+                                            <span class="badge-role badge-admin">Admin</span>
+                                        @else
+                                            <span class="badge-role badge-user">User</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($user->email_verified_at)
+                                            <span class="badge-role badge-verified">
+                                                <i class="fas fa-check me-1"></i>Terverifikasi
+                                            </span>
+                                        @else
+                                            <span class="badge-role badge-unverified">Belum Verifikasi</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-1">
+                                            <a href="{{ route('admin.users.show', $user) }}"
+                                               class="btn-action btn-view" title="Detail">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ route('admin.users.edit', $user) }}"
+                                               class="btn-action btn-edit" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <form method="POST" action="{{ route('admin.users.destroy', $user) }}"
+                                                  style="display: inline;"
+                                                  onsubmit="return confirm('Yakin ingin menghapus pengguna ini?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn-action btn-delete" title="Hapus">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <small class="text-muted">
+                            Menampilkan {{ $users->firstItem() }} sampai {{ $users->lastItem() }}
+                            dari {{ $users->total() }} pengguna
+                        </small>
+                        <div>{{ $users->links() }}</div>
+                    </div>
+
+                    @else
+                    <div class="text-center py-5">
+                        <i class="fas fa-users fa-3x text-muted mb-3 d-block"></i>
+                        <h5 class="text-muted">Belum ada pengguna terdaftar</h5>
+                        <p class="text-muted">Mulai dengan menambahkan pengguna baru.</p>
+                    </div>
+                    @endif
+                </div>
+
             </div>
-            @endif
-            @else
-            <div class="empty-state">
-                <div>📭</div>
-                <h3>Tidak ada data pengguna</h3>
-                <p>Belum ada pengguna terdaftar dalam sistem</p>
-            </div>
-            @endif
         </div>
     </div>
 
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Search function
-        function searchUsers() {
-            const input = document.getElementById('searchInput');
-            const filter = input.value.toLowerCase();
-            const table = document.getElementById('usersTable');
-            
-            if (!table) return;
-            
-            const tr = table.getElementsByTagName('tr');
-
-            for (let i = 1; i < tr.length; i++) {
-                let td = tr[i].getElementsByTagName('td');
-                let found = false;
-                
-                for (let j = 0; j < td.length; j++) {
-                    if (td[j]) {
-                        let txtValue = td[j].textContent || td[j].innerText;
-                        if (txtValue.toLowerCase().indexOf(filter) > -1) {
-                            found = true;
-                            break;
-                        }
-                    }
-                }
-                
-                tr[i].style.display = found ? '' : 'none';
-            }
-        }
-
-        // Search on input
-        document.getElementById('searchInput')?.addEventListener('keyup', searchUsers);
+        // Live search
+        document.getElementById('searchInput').addEventListener('keyup', function() {
+            const filter = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#usersTable tbody tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        });
     </script>
 </body>
 </html>

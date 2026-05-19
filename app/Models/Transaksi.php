@@ -32,13 +32,13 @@ class Transaksi extends Model
     ];
 
     protected $casts = [
-        'paid_at' => 'datetime',
-        'subtotal' => 'decimal:2',
-        'shipping_cost' => 'decimal:2',
+        'paid_at'      => 'datetime',
+        'subtotal'     => 'decimal:2',
+        'shipping_cost'=> 'decimal:2',
         'total_amount' => 'decimal:2',
     ];
 
-    // Relationships
+    // ── Relationships ────────────────────────────────────────────
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -49,7 +49,12 @@ class Transaksi extends Model
         return $this->hasMany(TransaksiDetail::class);
     }
 
-    // Scopes
+    public function cancellation()
+    {
+        return $this->hasOne(OrderCancellation::class);
+    }
+
+    // ── Scopes ───────────────────────────────────────────────────
     public function scopePending($query)
     {
         return $query->where('order_status', 'pending');
@@ -85,27 +90,57 @@ class Transaksi extends Model
         return $query->where('payment_status', 'pending');
     }
 
-    // Methods
-    public function canBeCancelled()
-    {
-        return in_array($this->order_status, ['pending', 'processing']);
+    // ── Methods ──────────────────────────────────────────────────
+
+    /**
+     * Cek apakah pesanan bisa dibatalkan.
+     * Syarat: status pending/processing DAN belum ada pengajuan cancel.
+     */
+   public function canBeCancelled(): bool
+{
+    $this->loadMissing('cancellation');
+
+    // Sudah shipped/delivered/cancelled → tidak bisa dibatalkan
+    if (in_array($this->order_status, ['shipped', 'delivered', 'cancelled'])) {
+        return false;
     }
 
-    public function markAsPaid()
+    // Sudah ada pengajuan cancel → tidak bisa duplikat
+    if ($this->cancellation !== null) {
+        return false;
+    }
+
+    return true; // ← ini yang hilang
+}
+    public function isAutoCancel(): bool
+    {
+        return $this->payment_method === 'cod'
+            && $this->order_status === 'pending';
+    }
+
+    public function hasPendingCancellation(): bool
+    {
+        $this->loadMissing('cancellation');
+
+        return $this->cancellation !== null
+            && $this->cancellation->status === 'pending';
+    }
+
+    public function markAsPaid(): bool
     {
         return $this->update([
             'payment_status' => 'paid',
-            'paid_at' => now()
+            'paid_at'        => now(),
         ]);
     }
 
-    public function updateOrderStatus($status)
+    public function updateOrderStatus(string $status): bool
     {
         return $this->update(['order_status' => $status]);
     }
 
-    // Accessor
-    public function getPaymentMethodLabelAttribute()
+    // ── Accessors ────────────────────────────────────────────────
+    public function getPaymentMethodLabelAttribute(): string
     {
         return $this->payment_method === 'transfer' ? 'Transfer Bank' : 'COD';
     }

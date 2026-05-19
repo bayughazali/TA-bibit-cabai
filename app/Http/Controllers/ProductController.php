@@ -90,8 +90,9 @@ class ProductController extends Controller
             $product = Product::create($data);
             
             // Auto set label based on stock
-            $product->updateLabelBasedOnStock();
+           $product->updateLabelBasedOnStock();
             $product->save();
+            $this->syncLabelAfterSave($product);
 
             return redirect()->route('admin.products.index')
                            ->with('success', 'Produk berhasil ditambahkan!');
@@ -165,8 +166,9 @@ public function update(Request $request, Product $product)
         $product->update($data);
         
         // Auto update label based on new stock
-        $product->updateLabelBasedOnStock();
+       $product->updateLabelBasedOnStock();
         $product->save();
+        $this->syncLabelAfterSave($product);
 
         return redirect()->route('admin.products.index')
                        ->with('success', 'Produk berhasil diupdate!');
@@ -195,7 +197,12 @@ public function destroy(Product $product)
     return redirect()->route('admin.products.index')
                     ->with('success', 'Produk berhasil dihapus');
 }
-
+// Tampilkan detail produk untuk user (public)
+public function publicShow($id)
+{
+    $product = Product::where('status', 'aktif')->findOrFail($id);
+    return view('products.show', compact('product'));
+}
     // NEW: Method untuk debugging gambar
     public function debugImage($id)
     {
@@ -212,4 +219,27 @@ public function destroy(Product $product)
 
         return response()->json($debug);
     }
+/**
+ * Cek apakah produk ini termasuk top 10 terlaris, jika iya set label terlaris
+ */
+private function syncLabelAfterSave(Product $product)
+{
+    if ($product->stock <= 0) {
+        return; // Sudah di-handle updateLabelBasedOnStock
+    }
+
+    $bestSellingIds = \Illuminate\Support\Facades\DB::table('transaksi_details')
+        ->select('product_id', \Illuminate\Support\Facades\DB::raw('SUM(quantity) as total_sold'))
+        ->groupBy('product_id')
+        ->orderByDesc('total_sold')
+        ->take(10)
+        ->pluck('product_id')
+        ->toArray();
+
+    if (in_array($product->id, $bestSellingIds)) {
+        $product->label = 'terlaris';
+        $product->save();
+    }
+}
+
 }

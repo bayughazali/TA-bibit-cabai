@@ -15,6 +15,7 @@ return [
     */
 
     'default' => env('MAIL_MAILER', 'log'),
+ 'admin_email' => env('ADMIN_EMAIL', 'bayualghozali86@gmail.com'), // ← tambahkan di sini
 
     /*
     |--------------------------------------------------------------------------

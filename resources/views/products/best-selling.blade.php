@@ -96,37 +96,41 @@
                     
                     <!-- Quantity Form -->
                     <div class="mt-auto">
-                        @if($product->stock > 0)
-                            <div class="input-group mb-3">
-                                <button class="btn btn-outline-success" 
-                                        type="button" 
-                                        onclick="decreaseQty({{ $product->id }})">
-                                    <i class="fas fa-minus"></i>
-                                </button>
-                                <input type="number" 
-                                       class="form-control quantity-input text-center" 
-                                       id="qty-{{ $product->id }}" 
-                                       value="1" 
-                                       min="1" 
-                                       max="{{ $product->stock }}">
-                                <button class="btn btn-outline-success" 
-                                        type="button" 
-                                        onclick="increaseQty({{ $product->id }}, {{ $product->stock }})">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </div>
-                            
-                            <button class="btn btn-success w-100" 
-                                    onclick="checkout({{ $product->id }})">
-                                <i class="fas fa-shopping-cart me-1"></i>
-                                Beli Sekarang
+                    @if($product->stock > 0)
+                        <div class="input-group mb-3">
+                            <button class="btn btn-outline-success" 
+                                    type="button" 
+                                    onclick="decreaseQty({{ $product->id }})">
+                                <i class="fas fa-minus"></i>
                             </button>
-                        @else
-                            <button class="btn btn-secondary w-100" disabled>
-                                <i class="fas fa-ban me-1"></i>
-                                Stok Habis
+                            <input type="number" 
+                                class="form-control quantity-input text-center" 
+                                id="qty-{{ $product->id }}" 
+                                value="1" 
+                                min="1" 
+                                max="{{ $product->stock }}">
+                            <button class="btn btn-outline-success" 
+                                    type="button" 
+                                    onclick="increaseQty({{ $product->id }}, {{ $product->stock }})">
+                                <i class="fas fa-plus"></i>
                             </button>
-                        @endif
+                        </div>
+                        
+                        <button class="btn btn-success w-100" 
+                                onclick="checkout({{ $product->id }})">
+                            <i class="fas fa-shopping-cart me-1"></i>
+                            Beli Sekarang
+                        </button>
+                        <a href="{{ route('products.show', $product->id) }}" class="btn btn-outline-success w-100 mt-2">
+                        <i class="fas fa-eye me-1"></i>
+                        Lihat Detail Produk
+                    </a>
+                    @else
+                        <button class="btn btn-secondary w-100" disabled>
+                            <i class="fas fa-ban me-1"></i>
+                            Stok Habis
+                        </button>
+                    @endif
                     </div>
                 </div>
             </div>
@@ -150,6 +154,59 @@
     </div>
     @endif
 </div>
+
+{{-- Script dipindah ke dalam @section('content') agar terbaca oleh browser --}}
+<script>
+const isLoggedIn = @json(auth()->check());
+const loginUrl = "{{ route('login') }}";
+
+function increaseQty(productId, maxStock) {
+    const input = document.getElementById('qty-' + productId);
+    let value = parseInt(input.value) || 1;
+    if (value < maxStock) {
+        input.value = value + 1;
+    } else {
+        alert('Stok maksimal: ' + maxStock);
+    }
+}
+
+function decreaseQty(productId) {
+    const input = document.getElementById('qty-' + productId);
+    let value = parseInt(input.value) || 1;
+    if (value > 1) {
+        input.value = value - 1;
+    }
+}
+
+function checkout(productId) {
+    if (!isLoggedIn) {
+        window.location.href = loginUrl;
+        return;
+    }
+
+    const input = document.getElementById('qty-' + productId);
+    if (!input) {
+        alert('Terjadi kesalahan, coba refresh halaman!');
+        return;
+    }
+
+    const quantity = parseInt(input.value) || 1;
+    const max = parseInt(input.getAttribute('max'));
+
+    if (isNaN(quantity) || quantity < 1) {
+        alert('Jumlah minimal 1!');
+        return;
+    }
+
+    if (quantity > max) {
+        alert('Jumlah melebihi stok tersedia (' + max + ')!');
+        return;
+    }
+
+    window.location.href = '/checkout?product_id=' + productId + '&quantity=' + quantity;
+}
+</script>
+
 @endsection
 
 @push('styles')
@@ -243,29 +300,4 @@
     }
 }
 </style>
-@endpush
-
-@push('scripts')
-<script>
-function increaseQty(productId, maxStock) {
-    const input = document.getElementById('qty-' + productId);
-    let value = parseInt(input.value);
-    if (value < maxStock) {
-        input.value = value + 1;
-    }
-}
-
-function decreaseQty(productId) {
-    const input = document.getElementById('qty-' + productId);
-    let value = parseInt(input.value);
-    if (value > 1) {
-        input.value = value - 1;
-    }
-}
-
-function checkout(productId) {
-    const quantity = document.getElementById('qty-' + productId).value;
-    window.location.href = `/checkout?product_id=${productId}&quantity=${quantity}`;
-}
-</script>
 @endpush

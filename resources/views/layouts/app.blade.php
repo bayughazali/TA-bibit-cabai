@@ -97,41 +97,45 @@
                 
                 <ul class="navbar-nav">
                     @auth
-                        <!-- Admin Dashboard Access -->
-                        <li class="nav-item me-2">
-                            <a class="nav-link admin-link admin-notification px-3 py-2 rounded" 
-                               href="{{ route('admin.dashboard') }}" 
-                               title="Dashboard Admin">
-                                <i class="fas fa-crown me-1"></i>Admin Panel
-                                <span class="badge admin-badge">NEW</span>
-                            </a>
-                        </li>
+                        {{-- Tampilkan Admin Panel HANYA jika is_admin = 1 --}}
+                            @if(Auth::user()->is_admin)
+                                <li class="nav-item me-2">
+                                    <a class="nav-link admin-link admin-notification px-3 py-2 rounded" 
+                                    href="{{ route('admin.dashboard') }}" 
+                                    title="Dashboard Admin">
+                                        <i class="fas fa-crown me-1"></i>Admin Panel
+                                        <span class="badge admin-badge">NEW</span>
+                                    </a>
+                                </li>
+                            @endif
                         
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle text-white" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-user me-1"></i>{{ Auth::user()->name }}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            @if(Auth::user()->is_admin)
                                 <li>
                                     <a class="dropdown-item admin-access" href="{{ route('admin.dashboard') }}">
                                         <i class="fas fa-tachometer-alt me-2"></i>Dashboard Admin
                                     </a>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
+                            @endif
                                 <li>
-                                    <a class="dropdown-item" href="#">
+                                <a class="dropdown-item" href="{{ route('profile') }}">
                                         <i class="fas fa-user-circle me-2"></i>Profil Saya
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="#">
+                                    <a class="dropdown-item" href="{{ route('orders.my') }}">
                                         <i class="fas fa-box me-2"></i>Pesanan Saya
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="#">
+                                    <!-- <a class="dropdown-item" href="#">
                                         <i class="fas fa-cog me-2"></i>Pengaturan
-                                    </a>
+                                    </a> -->
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
@@ -171,6 +175,7 @@
     </nav>
 
     <!-- Alert Messages -->
+   <!-- Alert Messages -->
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
@@ -185,9 +190,29 @@
         </div>
     @endif
 
+    <!-- Notifikasi Pesanan Customer -->  
+@auth
+    @php 
+        $notifTerkirim = auth()->user()->unreadNotifications
+           ->filter(fn($n) => isset($n->data['status']) && in_array($n->data['status'], ['processing', 'shipped', 'delivered', 'cancelled']))
+            ->count();
+    @endphp
+    @if($notifTerkirim > 0)
+    <div id="notif-pesanan" data-count="{{ $notifTerkirim }}" class="alert alert-warning alert-dismissible fade show mb-0" role="alert">
+        <div class="container">
+            <i class="fas fa-bell me-2"></i>
+          Anda memiliki <strong>{{ $notifTerkirim }}</strong> update status pesanan baru.
+            <a href="{{ route('orders.my') }}" class="alert-link">Lihat Pesanan Saya</a>
+            <button type="button" class="btn-close" onclick="tutupNotif('notif_pesanan', 'notif-pesanan')"></button>
+        </div>
+    </div>
+    @endif
+@endauth
+
     <!-- Admin Welcome Banner (for authenticated users) -->
-    @auth
-        <div class="alert alert-info alert-dismissible fade show mb-0" role="alert" style="background: linear-gradient(135deg, #17a2b8, #20c997); border: none;">
+   @auth
+    @if(Auth::user()->is_admin)
+    <div id="notif-welcome" class="alert alert-info alert-dismissible fade show mb-0" role="alert" style="background: linear-gradient(135deg, #17a2b8, #20c997); border: none;">
             <div class="container">
                 <div class="d-flex align-items-center justify-content-between flex-wrap">
                     <div class="d-flex align-items-center">
@@ -198,11 +223,13 @@
                         <a href="{{ route('admin.dashboard') }}" class="btn btn-light btn-sm me-2">
                             <i class="fas fa-external-link-alt me-1"></i>Buka Dashboard
                         </a>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+                       <button type="button" class="btn-close btn-close-white" onclick="tutupNotif('notif_welcome', 'notif-welcome')"></button>
                     </div>
                 </div>
             </div>
         </div>
+        </div>
+    @endif
     @endauth
 
     <!-- Main Content -->
@@ -218,29 +245,40 @@
                     <h5><i class="fas fa-seedling me-2"></i>Bibit Cabai</h5>
                     <p>Platform terbaik untuk kebutuhan bibit dan tanaman Anda.</p>
                     <div class="mt-3">
-                        @auth
-                            <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-success btn-sm">
-                                <i class="fas fa-tools me-1"></i>Admin Panel
-                            </a>
-                        @else
+                       @auth
+                                @if(Auth::user()->is_admin)
+                                    <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-success btn-sm">
+                                        <i class="fas fa-tools me-1"></i>Admin Panel
+                                    </a>
+                                @endif
+                            @else
                             <a href="{{ route('admin.login.form') }}" class="btn btn-outline-success btn-sm">
                                 <i class="fas fa-tools me-1"></i>Admin Panel
                             </a>
                         @endauth
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <h5>Hubungi Kami</h5>
-                    <p><i class="fas fa-envelope me-2"></i>info@tabibit.com</p>
-                    <p><i class="fas fa-phone me-2"></i>+62 123 456 789</p>
-                    <p><i class="fas fa-shield-alt me-2"></i>Admin: admin@tabibit.com</p>
-                </div>
+               <div class="col-md-6">
+    <h5>Hubungi Kami</h5>
+    <p>
+        <a href="https://wa.me/62123456789" target="_blank" class="text-white text-decoration-none">
+            <i class="fab fa-whatsapp me-2 text-success"></i>+62 123 456 789
+        </a>
+    </p>
+    <p>
+        <a href="mailto:info@tabibit.com" class="text-white text-decoration-none">
+            <i class="fas fa-envelope me-2 text-success"></i>info@tabibit.com
+        </a>
+    </p>
+</div>
             </div>
             <hr>
             <div class="text-center">
                 <p>&copy; {{ date('Y') }} Bibit Cabai. All rights reserved. | 
                     @auth
-                        <a href="{{ route('admin.dashboard') }}" class="text-success text-decoration-none">Admin Panel</a>
+                        @if(Auth::user()->is_admin)
+                            <a href="{{ route('admin.dashboard') }}" class="text-success text-decoration-none">Admin Panel</a>
+                        @endif
                     @else
                         <a href="{{ route('admin.login.form') }}" class="text-success text-decoration-none">Admin Panel</a>
                     @endauth
@@ -253,32 +291,54 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Custom Scripts -->
-    <script>
-        // Auto-hide alerts
-        document.addEventListener('DOMContentLoaded', function() {
-            const alerts = document.querySelectorAll('.alert:not(.alert-info)');
-            alerts.forEach(function(alert) {
-                setTimeout(function() {
-                    if (alert.parentNode) {
-                        const bsAlert = new bootstrap.Alert(alert);
-                        bsAlert.close();
-                    }
-                }, 5000);
-            });
-
-            // Hide admin banner after 10 seconds
-            const adminBanner = document.querySelector('.alert-info');
-            if (adminBanner) {
-                setTimeout(function() {
-                    if (adminBanner.parentNode) {
-                        const bsAlert = new bootstrap.Alert(adminBanner);
-                        bsAlert.close();
-                    }
-                }, 10000);
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Notif pesanan - cek berdasarkan jumlah notif
+        var pesananEl = document.getElementById('notif-pesanan');
+        if (pesananEl) {
+            var count = pesananEl.getAttribute('data-count');
+            var savedCount = localStorage.getItem('notif_pesanan_count');
+            if (savedCount === count) {
+                pesananEl.style.display = 'none';
             }
-        });
-    </script>
-    
+        }
+
+        // Notif welcome - pakai sessionStorage (reset setiap login baru)
+        if (sessionStorage.getItem('notif_welcome') === 'ditutup') {
+            var el = document.getElementById('notif-welcome');
+            if (el) el.style.display = 'none';
+        }
+
+        // Auto-hide semua notif setelah 5 detik
+        setTimeout(function() {
+            ['notif-pesanan', 'notif-welcome'].forEach(function(elId) {
+                var el = document.getElementById(elId);
+                if (el && el.style.display !== 'none') {
+                    el.style.transition = 'opacity 0.8s ease';
+                    el.style.opacity = '0';
+                    setTimeout(function() { el.style.display = 'none'; }, 800);
+                }
+            });
+        }, 5000);
+    });
+
+    function tutupNotif(key, elId) {
+        if (key === 'notif_pesanan') {
+            var el = document.getElementById(elId);
+            var count = el ? el.getAttribute('data-count') : '0';
+            localStorage.setItem('notif_pesanan_count', count);
+        } else {
+            sessionStorage.setItem(key, 'ditutup'); // ganti localStorage -> sessionStorage
+        }
+        var el = document.getElementById(elId);
+        if (el) {
+            el.style.transition = 'opacity 0.3s';
+            el.style.opacity = '0';
+            setTimeout(function() { el.style.display = 'none'; }, 300);
+        }
+    }
+</script>
+
     @yield('scripts')
 </body>
 </html>

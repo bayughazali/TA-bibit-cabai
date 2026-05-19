@@ -73,7 +73,7 @@
                     </a>
                 </div>
                 <div class="col-lg-6 text-center">
-                    <img src="{{ asset('images/cabai-hero.jpg') }}" 
+                    <img src="{{ asset('images/bara f1.jpeg') }}" 
                          alt="Bibit Cabai" 
                          class="img-fluid hero-image"
                          onerror="this.src='https://via.placeholder.com/400x300/28a745/ffffff?text=Bibit+Cabai+Hero'">
@@ -102,7 +102,7 @@
                         @endif
                         
                         <div class="overflow-hidden">
-                            <img src="{{ $product->image_url }}" 
+                           <img src="{{ $product->image ? asset('storage/' . $product->image) : 'https://via.placeholder.com/300x250/28a745/ffffff?text=' . urlencode($product->name) }}"
                                  class="card-img-top product-image" 
                                  alt="{{ $product->name }}"
                                  loading="lazy"
@@ -111,7 +111,7 @@
                         
                         <div class="card-body d-flex flex-column">
                             <h5 class="card-title">{{ $product->name }}</h5>
-                            <div class="price-text mb-3">{{ $product->formatted_price }}</div>
+                            <div class="price-text mb-3">Rp {{ number_format($product->price, 0, ',', '.') }}</div>
                             
                             @if($product->total_sold > 0)
                             <small class="text-muted mb-3">
@@ -148,6 +148,10 @@
                                         <i class="fas fa-shopping-cart me-1"></i>
                                         Beli Sekarang
                                     </button>
+                                    <a href="{{ route('products.show', $product->id) }}" class="btn btn-outline-success w-100 mt-2">
+                                    <i class="fas fa-eye me-1"></i>
+                                    Lihat Detail Produk
+                                </a>
                                 @else
                                     <button class="btn btn-secondary w-100" disabled>
                                         <i class="fas fa-ban me-1"></i>
@@ -194,7 +198,77 @@
             @endif
         </div>
     </section>
+  <!-- Semua Produk Section -->
+    <section class="py-5 bg-white">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold text-success">SEMUA PRODUK</h2>
+                <p class="lead text-muted">Pilihan lengkap bibit cabai kami</p>
+            </div>
 
+            <div class="row g-4">
+                @foreach($allProducts as $product)
+                <div class="col-lg-4 col-md-6">
+                    <div class="card product-card h-100 position-relative">
+                        <div class="overflow-hidden">
+                            <img src="{{ $product->image ? asset('storage/' . $product->image) : 'https://via.placeholder.com/300x250/28a745/ffffff?text=' . urlencode($product->name) }}"
+                                 class="card-img-top product-image"
+                                 alt="{{ $product->name }}"
+                                 loading="lazy">
+                        </div>
+
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">{{ $product->name }}</h5>
+                            <div class="price-text mb-3">Rp {{ number_format($product->price, 0, ',', '.') }}</div>
+
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <small class="text-muted">
+                                        <i class="fas fa-boxes me-1"></i>
+                                        Stok: {{ number_format($product->stock) }}
+                                    </small>
+                                    @if($product->stock > 0)
+                                        <span class="badge bg-success">Tersedia</span>
+                                    @else
+                                        <span class="badge bg-danger">Habis</span>
+                                    @endif
+                                </div>
+
+                                @if($product->stock > 0)
+                                    <div class="input-group mb-3">
+                                        <button class="btn btn-outline-success" type="button" onclick="decreaseQty('all-{{ $product->id }}')">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <input type="number" class="form-control quantity-input" id="qty-all-{{ $product->id }}" value="1" min="1" max="{{ $product->stock }}">
+                                        <button class="btn btn-outline-success" type="button" onclick="increaseQty('all-{{ $product->id }}', {{ $product->stock }})">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+
+                                    <button class="btn btn-success w-100" onclick="checkoutAll({{ $product->id }}, 'all-{{ $product->id }}')">
+                                        <i class="fas fa-shopping-cart me-1"></i>
+                                        Beli Sekarang
+                                    </button>
+                                    <a href="{{ route('products.show', $product->id) }}" class="btn btn-outline-success w-100 mt-2">
+                                    <i class="fas fa-eye me-1"></i>
+                                    Lihat Detail Produk
+                                </a>
+                                @else
+                                    <button class="btn btn-secondary w-100" disabled>
+                                        <i class="fas fa-ban me-1"></i>
+                                        Stok Habis
+                                    </button>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
     <!-- Features Section -->
     <section class="py-5 bg-white">
         <div class="container">
@@ -214,10 +288,10 @@
                             <i class="fas fa-truck fa-2x"></i>
                         </div>
                         <h5>Pengiriman Cepat</h5>
-                        <p class="text-muted">Pengiriman ke seluruh Indonesia dengan packaging aman.</p>
+                        <p class="text-muted">Pengiriman ke seluruh kabupaten Bondowoso dengan packaging aman.</p>
                     </div>
                 </div>
-                <div class="col-lg-3 col-md-6">
+                <!-- <div class="col-lg-3 col-md-6">
                     <div class="text-center">
                         <div class="bg-success text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
                             <i class="fas fa-medal fa-2x"></i>
@@ -225,7 +299,7 @@
                         <h5>Garansi Tumbuh</h5>
                         <p class="text-muted">Garansi bibit tumbuh atau uang kembali 100%.</p>
                     </div>
-                </div>
+                </div> -->
                 <div class="col-lg-3 col-md-6">
                     <div class="text-center">
                         <div class="bg-success text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
@@ -241,6 +315,10 @@
 </div>
 
 <script>
+// Cek status login dari Laravel (true/false)
+const isLoggedIn = @json(auth()->check());
+const loginUrl = "{{ route('login') }}";
+
 function increaseQty(productId, maxStock) {
     const input = document.getElementById('qty-' + productId);
     let value = parseInt(input.value);
@@ -258,7 +336,20 @@ function decreaseQty(productId) {
 }
 
 function checkout(productId) {
+    if (!isLoggedIn) {
+        window.location.href = loginUrl;
+        return;
+    }
     const quantity = document.getElementById('qty-' + productId).value;
+    window.location.href = `/checkout?product_id=${productId}&quantity=${quantity}`;
+}
+
+function checkoutAll(productId, inputKey) {
+    if (!isLoggedIn) {
+        window.location.href = loginUrl;
+        return;
+    }
+    const quantity = document.getElementById('qty-' + inputKey).value;
     window.location.href = `/checkout?product_id=${productId}&quantity=${quantity}`;
 }
 </script>

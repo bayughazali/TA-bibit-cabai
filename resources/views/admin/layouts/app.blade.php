@@ -206,15 +206,18 @@
                 <a href="{{ route('admin.orders') }}" class="menu-item {{ request()->routeIs('admin.orders') ? 'active' : '' }}">
                     <i class="fas fa-shopping-cart"></i>Pesanan
                 </a>
+                <a href="{{ route('admin.cancellations') }}" class="menu-item active">
+                <i class="fas fa-times-circle"></i>Pengajuan Batal
+            </a>
                 <a href="{{ route('admin.users') }}" class="menu-item {{ request()->routeIs('admin.users') ? 'active' : '' }}">
                     <i class="fas fa-users"></i>Pengguna
                 </a>
-                <a href="{{ route('admin.reports') }}" class="menu-item {{ request()->routeIs('admin.reports') ? 'active' : '' }}">
+                <a href="{{ route('admin.laporan') }}" class="menu-item {{ request()->routeIs('admin.laporan') ? 'active' : '' }}">
                     <i class="fas fa-chart-line"></i>Laporan
                 </a>
-                <a href="{{ route('admin.settings') }}" class="menu-item {{ request()->routeIs('admin.settings') ? 'active' : '' }}">
+                <!-- <a href="{{ route('admin.settings') }}" class="menu-item {{ request()->routeIs('admin.settings') ? 'active' : '' }}">
                     <i class="fas fa-cog"></i>Pengaturan
-                </a>
+                </a> -->
                 <div class="mt-4 px-3">
                     <form method="POST" action="{{ route('admin.logout') }}">
                         @csrf

@@ -4,9 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Transaksi;
+use App\Models\OrderCancellation;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Mail\OrderShippedNotification;
+use App\Notifications\OrderStatusChanged;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class TransaksiController extends Controller
 {
@@ -92,107 +97,127 @@ class TransaksiController extends Controller
      * Update the specified transaction in storage.
      * UPDATED: Menambahkan validasi dan update untuk customer info dan shipping
      */
-    public function update(Request $request, $id)
-    {
-        $request->validate([
-            'customer_name' => 'required|string|max:255',
-            'customer_phone' => 'required|string|max:20',
-            'customer_email' => 'nullable|email|max:255',
-            'shipping_address' => 'required|string',
-            'city' => 'required|string|max:100',
-            'province' => 'required|string|max:100',
-            'postal_code' => 'required|string|max:10',
-            'order_status' => 'required|in:pending,processing,shipped,delivered,cancelled',
-            'payment_status' => 'required|in:pending,paid,failed',
-            'tracking_number' => 'nullable|string|max:100',
-            'notes' => 'nullable|string'
-        ]);
+  public function update(Request $request, $id)
+{
+    $request->validate([
+        'order_status'   => 'required|in:pending,processing,shipped,delivered,cancelled',
+        'payment_status' => 'required|in:pending,paid,failed',
+        'tracking_number'=> 'nullable|string|max:100',
+        'notes'          => 'nullable|string',
+    ]);
 
-        try {
-            $transaksi = Transaksi::findOrFail($id);
-            
-            $updateData = [
-                'customer_name' => $request->customer_name,
-                'customer_phone' => $request->customer_phone,
-                'customer_email' => $request->customer_email,
-                'shipping_address' => $request->shipping_address,
-                'city' => $request->city,
-                'province' => $request->province,
-                'postal_code' => $request->postal_code,
-                'order_status' => $request->order_status,
-                'payment_status' => $request->payment_status,
-                'tracking_number' => $request->tracking_number,
-                'notes' => $request->notes
-            ];
+    try {
+        $transaksi = Transaksi::findOrFail($id);
 
-            // If payment status changed to paid, set paid_at
-            if ($request->payment_status === 'paid' && $transaksi->payment_status !== 'paid') {
-                $updateData['paid_at'] = now();
-            }
+        $oldStatus = $transaksi->order_status;
 
-            $transaksi->update($updateData);
+        $updateData = [
+            'order_status'    => $request->order_status,
+            'payment_status'  => $request->payment_status,
+            'tracking_number' => $request->tracking_number,
+            'notes'           => $request->notes,
 
-            return redirect()
-                ->route('admin.transaksis.show', $id)
-                ->with('success', 'Transaksi berhasil diupdate!');
+            // Field customer & shipping TIDAK diupdate
+            'customer_name'   => $transaksi->customer_name,
+            'customer_phone'  => $transaksi->customer_phone,
+            'customer_email'  => $transaksi->customer_email,
+            'shipping_address'=> $transaksi->shipping_address,
+            'city'            => $transaksi->city,
+            'province'        => $transaksi->province,
+            'postal_code'     => $transaksi->postal_code,
+        ];
 
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage())
-                ->withInput();
+        if ($request->payment_status === 'paid' && $transaksi->payment_status !== 'paid') {
+            $updateData['paid_at'] = now();
         }
-    }
 
+        $transaksi->update($updateData);
+
+        // Kirim notifikasi jika order_status berubah
+        if ($transaksi->user_id && $request->order_status !== $oldStatus) {
+            try {
+                $transaksi->user->notify(new OrderStatusChanged($transaksi, $request->order_status));
+            } catch (\Exception $notifError) {
+                Log::warning('Gagal simpan notifikasi: ' . $notifError->getMessage());
+            }
+        }
+
+        return redirect()
+            ->route('admin.transaksis.show', $id)
+            ->with('success', 'Transaksi berhasil diupdate!');
+
+    } catch (\Exception $e) {
+        return redirect()
+            ->back()
+            ->with('error', 'Terjadi kesalahan: ' . $e->getMessage())
+            ->withInput();
+    }
+}
     /**
      * Update order status via AJAX or regular request.
      * UPDATED: Menerima field 'order_status' selain 'status'
      */
     public function updateStatus(Request $request, $id)
-    {
-        // Accept both 'status' and 'order_status' field names
-        $statusField = $request->has('order_status') ? 'order_status' : 'status';
-        
-        $request->validate([
-            $statusField => 'required|in:pending,processing,shipped,delivered,cancelled',
-        ]);
+{
+    try {
+        $transaksi = Transaksi::with('details')->findOrFail($id);
 
-        try {
-            $transaksi = Transaksi::findOrFail($id);
-            $newStatus = $request->input($statusField);
-            
-            // Use model method if exists, otherwise direct update
-            if (method_exists($transaksi, 'updateOrderStatus')) {
-                $transaksi->updateOrderStatus($newStatus);
-            } else {
-                $transaksi->update(['order_status' => $newStatus]);
+        // Handle order_status
+        if ($request->has('order_status')) {
+            $request->validate([
+                'order_status' => 'required|in:pending,processing,shipped,delivered,cancelled',
+            ]);
+
+           $newStatus = $request->order_status;
+            $oldStatus = $transaksi->order_status;
+
+            // Jika sudah cancelled, tidak bisa diubah
+            if (in_array($oldStatus, ['cancelled', 'delivered'])) {
+            return response()->json([
+            'success' => false,
+            'message' => 'Pesanan yang sudah selesai atau dibatalkan tidak dapat diubah kembali.'
+                ], 422);
             }
 
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Status berhasil diupdate!'
-                ]);
+            $transaksi->update(['order_status' => $newStatus]);
+
+            if ($newStatus === 'shipped' && $oldStatus !== 'shipped') {
+                try {
+                    Mail::to($transaksi->customer_email)
+                        ->send(new OrderShippedNotification($transaksi));
+                } catch (\Exception $mailError) {
+                    Log::warning('Gagal kirim email shipped: ' . $mailError->getMessage());
+                }
             }
 
-            return redirect()
-                ->back()
-                ->with('success', 'Status berhasil diupdate!');
-
-        } catch (\Exception $e) {
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Gagal update status: ' . $e->getMessage()
-                ], 500);
+            if ($transaksi->user_id) {
+                try {
+                    $transaksi->user->notify(new OrderStatusChanged($transaksi, $newStatus));
+                } catch (\Exception $notifError) {
+                    Log::warning('Gagal simpan notifikasi: ' . $notifError->getMessage());
+                }
             }
-
-            return redirect()
-                ->back()
-                ->with('error', 'Gagal update status: ' . $e->getMessage());
         }
-    }
 
+        // Handle payment_status
+        if ($request->has('payment_status')) {
+            $request->validate([
+                'payment_status' => 'required|in:pending,paid,failed',
+            ]);
+
+            $updateData = ['payment_status' => $request->payment_status];
+            if ($request->payment_status === 'paid' && $transaksi->payment_status !== 'paid') {
+                $updateData['paid_at'] = now();
+            }
+            $transaksi->update($updateData);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Status berhasil diupdate!']);
+
+    } catch (\Exception $e) {
+        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+    }
+}
     /**
      * Update payment status.
      */
@@ -409,4 +434,72 @@ class TransaksiController extends Controller
         $transaksi = Transaksi::with(['details.product', 'user'])->findOrFail($id);
         return view('admin.transaksis.print', compact('transaksi'));
     }
+
+// ← tambah di bagian use atas
+
+/**
+ * Daftar pengajuan pembatalan (Admin)
+ */
+public function cancellations()
+{
+    $cancellations = OrderCancellation::with(['transaksi', 'user'])
+        ->orderByRaw("FIELD(status, 'pending', 'approved', 'rejected')")
+        ->orderBy('created_at', 'desc')
+        ->paginate(15);
+
+    return view('admin.cancellations', compact('cancellations'));
+}
+
+/**
+ * Setujui pengajuan pembatalan
+ */
+public function approveCancellation(Request $request, $id)
+{
+    $cancellation = OrderCancellation::with('transaksi')->findOrFail($id);
+
+    $cancellation->update([
+        'status'      => 'approved',
+        'admin_note'  => $request->admin_note ?? 'Pengajuan pembatalan disetujui oleh admin.',
+        'reviewed_by' => auth()->id(),
+        'reviewed_at' => now(),
+    ]);
+
+    // Kembalikan stok produk
+    foreach ($cancellation->transaksi->details as $detail) {
+        $product = Product::find($detail->product_id);
+        if ($product) {
+            $product->increment('stock', $detail->quantity);
+        }
+    }
+
+    // Update status pesanan jadi cancelled
+    $cancellation->transaksi->update(['order_status' => 'cancelled']);
+
+    return back()->with('success', 'Pengajuan disetujui. Pesanan dibatalkan & stok dikembalikan.');
+}
+
+/**
+ * Tolak pengajuan pembatalan
+ */
+public function rejectCancellation(Request $request, $id)
+{
+    $request->validate([
+        'admin_note' => ['required', 'string', 'max:500'],
+    ], [
+        'admin_note.required' => 'Alasan penolakan wajib diisi.',
+    ]);
+
+    $cancellation = OrderCancellation::findOrFail($id);
+
+    $cancellation->update([
+        'status'      => 'rejected',
+        'admin_note'  => $request->admin_note,
+        'reviewed_by' => auth()->id(),
+        'reviewed_at' => now(),
+    ]);
+
+    return back()->with('success', 'Pengajuan pembatalan berhasil ditolak.');
+}
+
+
 }

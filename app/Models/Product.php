@@ -90,17 +90,15 @@ class Product extends Model
     }
 
     // NEW: Method untuk mendapatkan label berdasarkan stok
-    public function updateLabelBasedOnStock()
-    {
-        if ($this->stock <= 0) {
-            $this->label = 'habis';
-        } elseif ($this->stock > 1000) {
-            $this->label = 'terlaris';
-        } else {
-            $this->label = 'tersedia';
-        }
-        return $this;
+   public function updateLabelBasedOnStock()
+{
+    if ($this->stock <= 0) {
+        $this->label = 'habis';
+    } else {
+        $this->label = 'tersedia';
     }
+    return $this;
+}
 
     // Scope untuk produk aktif
     public function scopeActive($query)
@@ -126,4 +124,9 @@ class Product extends Model
     {
         return $query->where('category', $category);
     }
+    // Relasi ke transaksi details untuk menghitung total terjual
+public function transaksiDetails()
+{
+    return $this->hasMany(TransaksiDetail::class);
+}
 }

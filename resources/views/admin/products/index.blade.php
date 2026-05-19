@@ -412,15 +412,19 @@
                 <a href="{{ route('admin.orders') }}" class="menu-item">
                     <i class="fas fa-shopping-cart"></i>Pesanan
                 </a>
+                 {{-- ↓ TAMBAHKAN DI SINI ↓ --}}
+                <a href="{{ route('admin.cancellations') }}" class="menu-item">
+                    <i class="fas fa-times-circle"></i>Pengajuan Batal
+                </a>
                 <a href="{{ route('admin.users') }}" class="menu-item">
                     <i class="fas fa-users"></i>Pengguna
                 </a>
-                <a href="{{ route('admin.reports') }}" class="menu-item">
+                <a href="{{ route('admin.laporan') }}" class="menu-item">
                     <i class="fas fa-chart-line"></i>Laporan
                 </a>
-                <a href="{{ route('admin.settings') }}" class="menu-item">
+                <!-- <a href="{{ route('admin.settings') }}" class="menu-item">
                     <i class="fas fa-cog"></i>Pengaturan
-                </a>
+                </a> -->
                 <div class="mt-4 px-3">
                     <form method="POST" action="{{ route('admin.logout') }}">
                         @csrf

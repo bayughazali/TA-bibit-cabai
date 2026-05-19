@@ -237,12 +237,12 @@
                 <a class="menu-item" href="{{ route('admin.users') }}">
                     <i class="fas fa-users"></i>Pengguna
                 </a>
-                <a class="menu-item" href="{{ route('admin.reports') }}">
+                <a class="menu-item" href="{{ route('admin.laporan') }}">
                     <i class="fas fa-chart-line"></i>Laporan
                 </a>
-                <a class="menu-item" href="{{ route('admin.settings') }}">
+                <!-- <a class="menu-item" href="{{ route('admin.settings') }}">
                     <i class="fas fa-cog"></i>Pengaturan
-                </a>
+                </a> -->
                 <div class="mt-4 px-3">
                     <form method="POST" action="{{ route('admin.logout') }}">
                         @csrf

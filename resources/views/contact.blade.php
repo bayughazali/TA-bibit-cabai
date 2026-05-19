@@ -22,21 +22,21 @@
                     <div class="contact-info">
                         <div class="mb-4">
                             <h5><i class="fas fa-map-marker-alt text-success me-2"></i>Alamat</h5>
-                            <p class="text-muted">Jl. Raya Bondowoso No. 123<br>Bondowoso, Jawa Timur 68211</p>
+                            <p class="text-muted">Jurang sapi, tapen, Bondowoso<br>Masuk paping sebelah toko</p>
                         </div>
                         
                         <div class="mb-4">
                             <h5><i class="fas fa-phone text-success me-2"></i>Telepon</h5>
                             <p class="text-muted">
-                                <a href="tel:+62338421234" class="text-decoration-none">+62 338 421 234</a>
+                                <a href="tel:081331830561" class="text-decoration-none">081331830561</a>
                             </p>
                         </div>
                         
                         <div class="mb-4">
                             <h5><i class="fas fa-envelope text-success me-2"></i>Email</h5>
                             <p class="text-muted">
-                                <a href="mailto:info@bibitcabaibondowoso.com" class="text-decoration-none">
-                                    info@bibitcabaibondowoso.com
+                                <a href="mailto:bibitcabai@gmail.com" class="text-decoration-none">
+                                    bibitcabai@gmail.com
                                 </a>
                             </p>
                         </div>
@@ -44,8 +44,8 @@
                         <div class="mb-4">
                             <h5><i class="fab fa-whatsapp text-success me-2"></i>WhatsApp</h5>
                             <p class="text-muted">
-                                <a href="https://wa.me/6281234567890" class="text-decoration-none" target="_blank">
-                                    +62 812 3456 7890
+                                <a href="https://wa.me/081331830561" class="text-decoration-none" target="_blank">
+                                    081331830561
                                 </a>
                             </p>
                         </div>
@@ -163,13 +163,13 @@
                 </div>
                 <div class="card-body p-0">
                     <div class="ratio ratio-21x9">
-                        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3949.3962!2d113.8221!3d-7.9138!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zN8KwNTQnNDkuNyJTIDExM8KwNDknMTkuNiJF!5e0!3m2!1sen!2sid!4v1640000000000!5m2!1sen!2sid" 
-                                style="border:0;" 
-                                allowfullscreen="" 
-                                loading="lazy" 
-                                referrerpolicy="no-referrer-when-downgrade">
-                        </iframe>
-                    </div>
+                    <iframe src="https://maps.google.com/maps?q=-7.894878,113.909934&z=17&output=embed&hl=id" 
+                            style="border:0;" 
+                            allowfullscreen="" 
+                            loading="lazy" 
+                            referrerpolicy="no-referrer-when-downgrade">
+                    </iframe>
+                </div>
                 </div>
             </div>
         </div>

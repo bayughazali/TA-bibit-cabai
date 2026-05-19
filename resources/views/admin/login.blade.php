@@ -116,7 +116,12 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
-
+                            <div class="text-end mb-3">
+                                <a href="{{ route('admin.password.request') }}" 
+                                class="text-decoration-none small" style="color: #11998e;">
+                                    Lupa Password?
+                                </a>
+                            </div>
                             <div class="d-grid">
                                 <button type="submit" class="btn btn-login py-3 fw-bold">
                                     🌿 Masuk ke Dashboard
@@ -133,9 +138,9 @@
                         {{-- Debug Info (Hapus di production) --}}
                         @if (config('app.debug'))
                             <div class="mt-4 p-2 bg-light rounded small">
-                                <strong>Debug Info:</strong><br>
+                                <!-- <strong>Debug Info:</strong><br>
                                 Route: {{ Route::currentRouteName() }}<br>
-                                Method: {{ request()->method() }}<br>
+                                Method: {{ request()->method() }}<br> -->
                                 @if(request()->method() === 'POST')
                                     Data: {{ json_encode(request()->only(['email'])) }}
                                 @endif

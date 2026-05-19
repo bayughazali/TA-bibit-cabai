@@ -52,10 +52,14 @@
                         
                         <h5 class="mb-3">Data Pembeli</h5>
                         
-                        <div class="mb-3">
+                                                <div class="mb-3">
                             <label class="form-label">Nama Lengkap *</label>
-                            <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" 
-                                   value="{{ old('name') }}" required>
+                            <input type="text" name="name" 
+                                class="form-control @error('name') is-invalid @enderror" 
+                                value="{{ old('name') }}" 
+                                placeholder="Minimal 8 karakter" 
+                                minlength="8" required>
+                            <small class="text-muted">Minimal 8 karakter</small>
                             @error('name')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -63,21 +67,28 @@
                         
                         <div class="mb-3">
                             <label class="form-label">Nomor Telepon *</label>
-                            <input type="text" name="phone" class="form-control @error('phone') is-invalid @enderror" 
-                                   value="{{ old('phone') }}" placeholder="08123456789" required>
+                            <input type="text" name="phone" 
+                                class="form-control @error('phone') is-invalid @enderror" 
+                                value="{{ old('phone') }}" 
+                                placeholder="+6281234567890" 
+                                minlength="11" required>
+                            <small class="text-muted">Harus diawali +62, contoh: +6281234567890</small>
                             @error('phone')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Email *</label>
-                            <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" 
-                                   value="{{ old('email') }}" required>
-                            @error('email')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+                      <div class="mb-3">
+                        <label class="form-label">Email *</label>
+                        <input type="email" name="email" 
+                            class="form-control @error('email') is-invalid @enderror" 
+                            value="{{ old('email') }}" 
+                            placeholder="contoh@email.com"
+                            minlength="8" required>
+                        <small class="text-muted">Minimal 8 karakter</small>
+                        @error('email')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
                         
                         <h5 class="mb-3 mt-4">Alamat Pengiriman</h5>
                         
@@ -131,21 +142,30 @@
                             </div>
                         </div>
                         
-                        <div class="mb-3">
-                            <label class="form-label">Alamat Lengkap (Nama Jalan, No Rumah, RT/RW, Desa) *</label>
-                            <textarea name="address" class="form-control @error('address') is-invalid @enderror" 
-                                      rows="3" placeholder="Contoh: Jl. Merdeka No. 123, RT 02/RW 05, Desa Kademangan" required>{{ old('address') }}</textarea>
-                            @error('address')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+                       <div class="mb-3">
+                                <label class="form-label">Alamat Lengkap *</label>
+                                <textarea name="address" 
+                                        class="form-control @error('address') is-invalid @enderror" 
+                                        rows="4" 
+                                        placeholder="Contoh: Jl. Merdeka No. 12, RT 02/RW 05, Desa Kademangan, Arah dari pasar ke utara 200m" 
+                                        minlength="20" required>{{ old('address') }}</textarea>
+                                <small class="text-muted">
+                                    Wajib lengkap: Nama Jalan · No. Rumah · RT/RW · Desa/Kelurahan · Ancer-ancer
+                                </small>
+                                @error('address')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
                         
                         <input type="hidden" name="province" value="Jawa Timur">
                         
-                        <div class="mb-3">
+                       <div class="mb-3">
                             <label class="form-label">Kode Pos *</label>
-                            <input type="text" name="postal_code" class="form-control @error('postal_code') is-invalid @enderror" 
-                                   value="{{ old('postal_code', '68200') }}" placeholder="68200" required>
+                            <input type="text" name="postal_code" 
+                                class="form-control @error('postal_code') is-invalid @enderror" 
+                                value="{{ old('postal_code', '68200') }}" 
+                                placeholder="68200" 
+                                maxlength="5" required>
                             @error('postal_code')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -387,23 +407,22 @@ document.addEventListener('DOMContentLoaded', function() {
         ongkirLoading.style.display = 'block';
         ongkirInfo.style.display = 'none';
         
-        setTimeout(() => {
+       setTimeout(() => {
             const baseOngkir = ongkirData[kecamatan] || 15000;
             let totalOngkir = baseOngkir;
-            let detail = `Base ongkir: Rp ${formatRupiah(baseOngkir)}`;
-            
-            if (quantity > 5) {
-                const extraBibit = quantity - 5;
-                const extraCost = extraBibit * 5000;
-                totalOngkir += extraCost;
-                detail += ` + Tambahan ${extraBibit} bibit: Rp ${formatRupiah(extraCost)}`;
-            }
-            
-            if (quantity >= 100) {
+            let detail = `Ongkir ke ${kecamatan}: Rp ${formatRupiah(baseOngkir)}`;
+
+            // Gratis ongkir >= 800 bibit
+            if (quantity >= 800) {
                 totalOngkir = 0;
-                detail = '🎉 GRATIS ONGKIR untuk pembelian 100+ bibit!';
+                detail = '🎉 GRATIS ONGKIR untuk pembelian 800+ bibit!';
             }
-            
+            // >= 1000 bibit: gratis ongkir + diskon 15%
+            if (quantity >= 1000) {
+                totalOngkir = 0;
+                detail = '🎉 GRATIS ONGKIR + Diskon 15% untuk pembelian 1000+ bibit!';
+            }
+
             document.getElementById('ongkirKecamatan').textContent = kecamatan;
             document.getElementById('ongkirAmount').textContent = 'Rp ' + formatRupiah(totalOngkir);
             document.getElementById('ongkirDetail').textContent = detail;
@@ -465,10 +484,41 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    function updateTotal(ongkir) {
-        const total = subtotal + ongkir;
+   function updateTotal(ongkir) {
+        // Hitung diskon
+        let diskon = 0;
+        let diskonLabel = '';
+
+        if (quantity >= 1000) {
+            diskon = subtotal * 0.15;
+            diskonLabel = '🎉 Diskon 15% untuk pembelian 1000+ bibit!';
+        }
+
+        const finalTotal = (subtotal - diskon) + ongkir;
+
         document.getElementById('ongkirDisplay').textContent = 'Rp ' + formatRupiah(ongkir);
-        document.getElementById('totalDisplay').textContent = 'Rp ' + formatRupiah(total);
+        document.getElementById('totalDisplay').textContent  = 'Rp ' + formatRupiah(finalTotal);
+
+        // Tampilkan/sembunyikan baris diskon
+        let diskonEl = document.getElementById('diskonRow');
+        if (!diskonEl && diskon > 0) {
+            // Buat baris diskon jika belum ada
+            const ongkirRow = document.querySelector('.total-section hr');
+            const rowHtml = `
+                <div class="d-flex justify-content-between mb-2 text-danger" id="diskonRow">
+                    <span>${diskonLabel}</span>
+                    <span><strong>-Rp ${formatRupiah(diskon)}</strong></span>
+                </div>`;
+            ongkirRow.insertAdjacentHTML('beforebegin', rowHtml);
+        } else if (diskonEl) {
+            if (diskon > 0) {
+                diskonEl.style.display = 'flex';
+                diskonEl.querySelector('span').textContent = diskonLabel;
+                diskonEl.querySelector('strong').textContent = '-Rp ' + formatRupiah(diskon);
+            } else {
+                diskonEl.style.display = 'none';
+            }
+        }
     }
     
     function formatRupiah(angka) {
