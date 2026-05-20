@@ -26,7 +26,7 @@
                     {{-- Body --}}
                     <tr>
                         <td style="padding:36px 40px;">
-                            <p style="color:#333;font-size:16px;margin:0 0 16px;">
+                            <p style="color:#333;font-size:16px;margin:0 0 17px;">
                                 Halo, <strong>{{ $name }}</strong>!
                             </p>
                             <p style="color:#555;font-size:14px;line-height:1.6;margin:0 0 24px;">
