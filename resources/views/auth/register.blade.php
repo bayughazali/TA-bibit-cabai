@@ -29,16 +29,16 @@
                                            value="{{ old('name') }}" 
                                            required 
                                            autocomplete="name"
-                                           placeholder="Minimal 12 karakter">
+                                           placeholder="Minimal 8 karakter">
                                 </div>
                                 <div class="form-text text-muted">
-                                    <small><i class="fas fa-info-circle"></i> Nama minimal harus 12 karakter</small>
+                                    <small><i class="fas fa-info-circle"></i> Nama minimal harus 8 karakter</small>
                                 </div>
                                 @error('name')
                                 <div class="text-danger mt-1"><small>{{ $message }}</small></div>
                                 @enderror
                                 <div id="nameError" class="text-danger mt-1" style="display: none;">
-                                    <small>Nama minimal harus 12 karakter</small>
+                                    <small>Nama minimal harus 8 karakter</small>
                                 </div>
                             </div>
 
@@ -76,16 +76,16 @@
                                            name="phone" 
                                            value="{{ old('phone') }}"
                                            required
-                                           placeholder="081234567890">
+                                           placeholder="+6281234567890">
                                 </div>
                                 <div class="form-text text-muted">
-                                    <small><i class="fas fa-info-circle"></i> Hanya angka, minimal 12 karakter</small>
+                                    <small><i class="fas fa-info-circle"></i> Harus diawali +62, contoh: +6281234567890</small>
                                 </div>
                                 @error('phone')
                                 <div class="text-danger mt-1"><small>{{ $message }}</small></div>
                                 @enderror
                                 <div id="phoneError" class="text-danger mt-1" style="display: none;">
-                                    <small>Nomor telepon harus angka dan minimal 12 karakter</small>
+                                    <small>Nomor telepon harus diawali +62 dan hanya boleh berisi angka</small>
                                 </div>
                             </div>
 
@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Real-time validation
     nameInput.addEventListener('input', function() {
         const nameError = document.getElementById('nameError');
-        if (this.value.length < 12) {
+        if (this.value.length < 8) {
             nameError.style.display = 'block';
             this.classList.add('is-invalid');
         } else {
@@ -258,9 +258,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const numberPattern = /^[0-9]+$/;
         
         // Remove non-numeric characters
-        this.value = this.value.replace(/[^0-9]/g, '');
         
-        if (!numberPattern.test(this.value) || this.value.length < 12) {
+        
+        if (!/^\+62[0-9]{9,15}$/.test(this.value) && this.value.length > 0) {
             phoneError.style.display = 'block';
             this.classList.add('is-invalid');
         } else {
@@ -340,8 +340,7 @@ document.addEventListener('DOMContentLoaded', function() {
             isValid = false;
         }
         
-        const numberPattern = /^[0-9]+$/;
-        if (!numberPattern.test(phoneInput.value) || phoneInput.value.length < 12) {
+        if (!/^\+62[0-9]{9,15}$/.test(phoneInput.value)) {
             document.getElementById('phoneError').style.display = 'block';
             phoneInput.classList.add('is-invalid');
             isValid = false;

@@ -22,22 +22,22 @@ class RegisterController extends Controller
     {
         // Validasi dasar terlebih dahulu
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|min:12|max:255',
+           'name' => 'required|string|min:8|max:255',
             'email' => 'required|string|email|max:255|unique:users|regex:/@gmail\.com$/|regex:/^\S+$/',
-            'phone' => 'required|string|regex:/^[0-9]+$/|min:12|max:20|regex:/^\S+$/',
+      'phone' => 'required|string|regex:/^\+62[0-9]{9,15}$/|max:20',
             'address' => 'required|string|min:12|max:500',
             'password' => 'required|string|min:8|confirmed|regex:/^\S+$/',
             'agree' => 'required|accepted',
         ], [
             'name.required' => 'Nama wajib diisi.',
-            'name.min' => 'Nama minimal harus 12 karakter.',
+           'name.min' => 'Nama minimal harus 8 karakter.',
             'email.required' => 'Email wajib diisi.',
             'email.email' => 'Format email tidak valid.',
             'email.unique' => 'Email sudah digunakan.',
             'email.regex' => 'Email harus menggunakan domain @gmail.com dan tidak boleh mengandung spasi.',
             'phone.required' => 'Nomor telepon wajib diisi.',
-            'phone.regex' => 'Nomor telepon hanya boleh berisi angka dan tidak boleh mengandung spasi.',
-            'phone.min' => 'Nomor telepon minimal harus 12 karakter.',
+           'phone.regex' => 'Nomor telepon harus diawali dengan +62 dan hanya boleh berisi angka.',
+            // 'phone.min' => 'Nomor telepon minimal harus 12 karakter.',
             'address.required' => 'Alamat wajib diisi.',
             'address.min' => 'Alamat minimal harus 12 karakter.',
             'password.required' => 'Password wajib diisi.',
