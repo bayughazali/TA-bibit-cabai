@@ -225,11 +225,12 @@
         <!-- Header -->
         <div class="invoice-header">
             <div class="company-info">
-                <h1>🌱 TA Bibit Cabai</h1>
-                <p>Jl. Contoh Alamat No. 123</p>
-                <p>Jember, Jawa Timur 68100</p>
-                <p>Phone: (0331) 123-4567</p>
-                <p>Email: info@tabibitcabai.com</p>
+                <h1>🌱 Bibit Cabai</h1>
+                <p>Jurang sapi, tapen, Bondowoso
+                    Masuk paping sebelah toko</p>
+                <p>Bondowoso, Tapen, Jawa timur</p>
+                <p>Phone: 081331830561</p>
+                <p>Email: bayualghozali86@gmail.com</p>
             </div>
             <div class="invoice-title">
                 <h2>INVOICE</h2>
@@ -337,7 +338,7 @@
         <div class="invoice-footer">
             <p><strong>Thank you for your business!</strong></p>
             <p>This is a computer-generated invoice and does not require a signature.</p>
-            <p>For any inquiries, please contact us at info@tabibitcabai.com</p>
+            <p>For any inquiries, please contact us at bayualghozali86@gmail.com</p>
         </div>
     </div>
 
