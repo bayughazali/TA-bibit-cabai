@@ -338,7 +338,9 @@
         <div class="invoice-footer">
             <p><strong>Thank you for your business!</strong></p>
             <p>This is a computer-generated invoice and does not require a signature.</p>
-            <p>For any inquiries, please contact us at bayualghozali86@gmail.com</p>
+            <p>For any inquiries, please contact us at bayualghozali86@gmail.com
+                
+            </p>
         </div>
     </div>
 
