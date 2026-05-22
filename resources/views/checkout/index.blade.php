@@ -189,7 +189,7 @@
                     <option value="seabank" {{ old('payment_method') == 'seabank' ? 'selected' : '' }}>
                         🏦 SeaBank
                     </option>
-                    <option value="shopee" {{ old('payment_method') == 'shopee' ? 'selected' : '' }}>
+                    <option value="shopepay" {{ old('payment_method') == 'shopee' ? 'selected' : '' }}>
                         🛒 ShopeePay
                     </option>
                     <option value="cod" {{ old('payment_method') == 'cod' ? 'selected' : '' }}>
@@ -474,7 +474,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 case 'seabank':
                     seabankInfo.style.display = 'block';
                     break;
-                case 'shopee':
+                case 'shopepay':
                     shopeeInfo.style.display = 'block';
                     break;
                 case 'cod':

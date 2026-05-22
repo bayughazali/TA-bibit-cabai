@@ -45,6 +45,7 @@ Route::prefix('checkout')->name('checkout.')->group(function () {
     Route::get('/', [CheckoutController::class, 'index'])->name('index');
     Route::post('/process', [CheckoutController::class, 'process'])->name('process');
     Route::get('/success/{id}', [CheckoutController::class, 'success'])->name('success');
+    Route::get('/status/{id}', [CheckoutController::class, 'getStatus'])->name('status'); // ✅ hapus /checkout/
 });
 
 /*

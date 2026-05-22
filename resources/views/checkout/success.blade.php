@@ -175,7 +175,7 @@
                             <div class="row">
                                 <div class="col-6"><strong>Status Pesanan:</strong></div>
                                 <div class="col-6 text-end">
-                                    <span class="badge bg-warning text-dark">Menunggu Pembayaran</span>
+                                    <span class="badge bg-warning text-dark" id="statusBadge">Menunggu Pembayaran</span>
                                 </div>
                             </div>
                         </div>
@@ -395,12 +395,30 @@
 </div>
 
 <script>
-function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(function() {
-        alert('Nomor rekening berhasil disalin!');
-    }, function(err) {
-        console.error('Gagal menyalin: ', err);
-    });
+const transaksiId = {{ $transaksi->id }};
+const statusBadge = document.getElementById('statusBadge');
+
+function checkStatus() {
+    fetch(`/checkout/status/${transaksiId}`)
+        .then(res => res.json())
+        .then(data => {
+            const paymentMap = {
+                'pending': { text: 'Menunggu Pembayaran', cls: 'bg-warning text-dark' },
+                'paid':    { text: 'Sudah Dibayar ✅',    cls: 'bg-success text-white' },
+                'failed':  { text: 'Pembayaran Gagal ❌',  cls: 'bg-danger text-white'  },
+            };
+            const p = paymentMap[data.payment_status] ?? paymentMap['pending'];
+            statusBadge.textContent = p.text;
+            statusBadge.className   = 'badge ' + p.cls;
+
+            if (data.payment_status === 'paid' || data.payment_status === 'failed') {
+                clearInterval(pollingInterval);
+            }
+        })
+        .catch(err => console.error('Gagal fetch status:', err));
 }
+
+checkStatus();
+const pollingInterval = setInterval(checkStatus, 10000);
 </script>
 @endsection

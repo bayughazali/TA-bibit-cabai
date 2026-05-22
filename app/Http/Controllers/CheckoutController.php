@@ -59,7 +59,7 @@ class CheckoutController extends Controller
                              'regex:/(?=.*[Jj]l\.?|.*[Jj]alan)(?=.*[Nn]o\.?)(?=.*[Rr][Tt])(?=.*[Rr][Ww])/'],
         'city'           => 'required|string|max:100',
         'postal_code'    => 'required|string|max:10',
-        'payment_method' => 'required|in:qris,bri,dana,seabank,shopee,cod',
+       'payment_method' => 'required|in:qris,bri,dana,seabank,shopepay,cod',
         'shipping_cost'  => 'required|numeric|min:0',
         'notes'          => 'nullable|string|max:1000',
     ], [
@@ -219,4 +219,15 @@ class CheckoutController extends Controller
                 ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
+    public function getStatus($id)
+{
+    $transaksi = Transaksi::find($id);
+    if (!$transaksi) {
+        return response()->json(['error' => 'Not found'], 404);
+    }
+    return response()->json([
+        'payment_status' => $transaksi->payment_status,
+        'order_status'   => $transaksi->order_status,
+    ]);
+}
 }
