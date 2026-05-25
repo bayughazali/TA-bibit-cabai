@@ -24,7 +24,7 @@ class RegisterController extends Controller
         $validator = Validator::make($request->all(), [
            'name' => 'required|string|min:8|max:255',
             'email' => 'required|string|email|max:255|unique:users|regex:/@gmail\.com$/|regex:/^\S+$/',
-      'phone' => 'required|string|regex:/^\+62[0-9]{9,15}$/|max:20',
+            'phone' => 'required|string|regex:/^\+62[0-9]{9,15}$/|max:20',
             'address' => 'required|string|min:12|max:500',
             'password' => 'required|string|min:8|confirmed|regex:/^\S+$/',
             'agree' => 'required|accepted',
@@ -36,7 +36,8 @@ class RegisterController extends Controller
             'email.unique' => 'Email sudah digunakan.',
             'email.regex' => 'Email harus menggunakan domain @gmail.com dan tidak boleh mengandung spasi.',
             'phone.required' => 'Nomor telepon wajib diisi.',
-           'phone.regex' => 'Nomor telepon harus diawali dengan +62 dan hanya boleh berisi angka.',
+           'phone.regex'   => 'Nomor telepon harus diawali dengan +62 dan hanya boleh berisi angka.',
+            'phone.unique'  => 'Nomor telepon sudah terdaftar di sistem kami.',
             // 'phone.min' => 'Nomor telepon minimal harus 12 karakter.',
             'address.required' => 'Alamat wajib diisi.',
             'address.min' => 'Alamat minimal harus 12 karakter.',
@@ -49,11 +50,24 @@ class RegisterController extends Controller
         ]);
 
         // Validasi password familiar
-        $validator->after(function ($validator) use ($request) {
-            if ($request->has('password') && $this->isCommonPassword($request->password)) {
-                $validator->errors()->add('password', 'Password yang Anda gunakan terlalu umum dan sering digunakan. Silakan pilih password yang lebih unik untuk keamanan akun Anda.');
-            }
-        });
+        // Validasi password familiar & pernah dipakai user lain
+$validator->after(function ($validator) use ($request) {
+    if ($request->has('password')) {
+        if ($this->isCommonPassword($request->password)) {
+            $validator->errors()->add('password', 'Password yang Anda gunakan terlalu umum. Silakan pilih password yang lebih unik.');
+        }
+
+        if ($this->isPasswordAlreadyUsed($request->password)) {
+            $validator->errors()->add('password', 'Password ini sudah pernah digunakan oleh akun lain. Silakan gunakan password yang berbeda.');
+        }
+    }
+
+    if ($request->has('phone') && $request->phone) {
+        if ($this->isPhoneAlreadyUsed($request->phone)) {
+            $validator->errors()->add('phone', 'Nomor telepon sudah terdaftar di sistem kami.');
+        }
+    }
+});
 
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
@@ -123,5 +137,38 @@ class RegisterController extends Controller
         ];
 
         return in_array(strtolower($password), array_map('strtolower', $commonPasswords));
+    }
+
+    /**
+ * Cek apakah password sudah pernah dipakai oleh user lain di database
+ */
+private function isPasswordAlreadyUsed(string $password): bool
+{
+    $users = User::whereNotNull('password')->get(['password']);
+
+    foreach ($users as $user) {
+        if (Hash::check($password, $user->password)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+     * Cek nomor telepon sudah terdaftar dalam berbagai format
+     */
+    private function isPhoneAlreadyUsed(string $phone): bool
+    {
+        $digitsOnly = preg_replace('/\D/', '', $phone);
+
+        $formats = [
+            $phone,                       // +6281234567890
+            $digitsOnly,                  // 6281234567890
+            '+' . $digitsOnly,            // +6281234567890
+            '0' . substr($digitsOnly, 2), // 081234567890
+        ];
+
+        return User::whereIn('phone', $formats)->exists();
     }
 }

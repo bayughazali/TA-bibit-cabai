@@ -50,14 +50,22 @@
                     </div>
                     @endif
 
-                    {{-- Info email target --}}
+                  {{-- Info target pengiriman --}}
                     <div class="alert alert-light border-start border-success border-3 mb-4">
                         <div class="d-flex align-items-center">
-                            <i class="fas fa-envelope text-success me-3 fs-5"></i>
-                            <div>
-                                <div class="fw-semibold text-dark">Kode dikirim ke:</div>
-                                <div class="text-muted small">{{ session('reset_email', 'email Anda') }}</div>
-                            </div>
+                            @if(session('reset_method') === 'whatsapp')
+                                <i class="fab fa-whatsapp text-success me-3 fs-5"></i>
+                                <div>
+                                    <div class="fw-semibold text-dark">Kode dikirim via WhatsApp ke:</div>
+                                    <div class="text-muted small">{{ session('reset_phone_display', 'nomor WA Anda') }}</div>
+                                </div>
+                            @else
+                                <i class="fas fa-envelope text-success me-3 fs-5"></i>
+                                <div>
+                                    <div class="fw-semibold text-dark">Kode dikirim ke:</div>
+                                    <div class="text-muted small">{{ session('reset_email', 'email Anda') }}</div>
+                                </div>
+                            @endif
                         </div>
                     </div>
 
@@ -96,13 +104,14 @@
                         {{-- Countdown Timer --}}
                         <div class="text-center mb-4">
                             <div id="timerWrapper">
-                                <p class="text-muted small mb-1">Kode berlaku selama:</p>
-                                <span id="countdown" class="badge bg-success fs-6 px-3 py-2">10:00</span>
+                               <p class="text-muted small mb-1">Kode berlaku selama:</p>
+                                <span id="countdown" class="badge bg-success fs-6 px-3 py-2">03:00</span>
                             </div>
-                            <div id="expiredWrapper" style="display:none;">
-                                <span class="badge bg-danger fs-6 px-3 py-2">
-                                    <i class="fas fa-times-circle me-1"></i>Kode sudah kadaluarsa
-                                </span>
+                          <div id="expiredWrapper" style="display:none;">
+                            <div class="alert alert-danger text-center py-2 px-3 mb-0">
+                                <i class="fas fa-times-circle me-1"></i>
+                                <strong>Kode sudah kadaluarsa.</strong><br>
+                                <small>Silakan minta kirim kode lagi.</small>
                             </div>
                         </div>
 
@@ -182,13 +191,15 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const boxes = document.querySelectorAll('.otp-box');
-    const otpHidden = document.getElementById('otpHidden');
-    const submitBtn = document.getElementById('submitBtn');
-    const resendBtn = document.getElementById('resendBtn');
-    const countdownEl = document.getElementById('countdown');
-    const timerWrapper = document.getElementById('timerWrapper');
+    const boxes      = document.querySelectorAll('.otp-box');
+    const otpHidden  = document.getElementById('otpHidden');
+    const submitBtn  = document.getElementById('submitBtn');
+    const resendBtn  = document.getElementById('resendBtn');
+    const countdownEl   = document.getElementById('countdown');
+    const timerWrapper  = document.getElementById('timerWrapper');
     const expiredWrapper = document.getElementById('expiredWrapper');
+
+    let isExpired = false; // ← flag global
 
     // ---- OTP box logic ----
     boxes.forEach((box, index) => {
@@ -212,7 +223,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        // Handle paste
         box.addEventListener('paste', function (e) {
             e.preventDefault();
             const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
@@ -231,14 +241,15 @@ document.addEventListener('DOMContentLoaded', function () {
     function updateHidden() {
         const otp = Array.from(boxes).map(b => b.value).join('');
         otpHidden.value = otp;
-        submitBtn.disabled = otp.length !== 6;
+        // Tombol submit aktif HANYA jika 6 digit DAN belum expired
+        submitBtn.disabled = (otp.length !== 6 || isExpired);
     }
 
-    // ---- Countdown Timer: 10 minutes ----
-    let seconds = 10 * 60;
+    // ---- Countdown Timer: 3 menit ----
+    let seconds = 3 * 60;
 
     function formatTime(s) {
-        const m = Math.floor(s / 60).toString().padStart(2, '0');
+        const m   = Math.floor(s / 60).toString().padStart(2, '0');
         const sec = (s % 60).toString().padStart(2, '0');
         return `${m}:${sec}`;
     }
@@ -247,22 +258,38 @@ document.addEventListener('DOMContentLoaded', function () {
         seconds--;
         countdownEl.textContent = formatTime(seconds);
 
+        // Berubah merah saat 60 detik terakhir
         if (seconds <= 60) {
-            countdownEl.classList.replace('bg-success', 'bg-warning');
-            countdownEl.classList.add('text-dark');
+            countdownEl.classList.remove('bg-success', 'bg-warning');
+            countdownEl.classList.add('bg-danger');
         }
+
         if (seconds <= 0) {
             clearInterval(timer);
+
+            // Set flag expired
+            isExpired = true;
+
+            // Sembunyikan timer, tampilkan pesan expired
             timerWrapper.style.display = 'none';
             expiredWrapper.style.display = 'block';
+
+            // Nonaktifkan submit & semua kotak OTP
             submitBtn.disabled = true;
-            // Enable resend after expiry
+            boxes.forEach(box => {
+                box.disabled = true;
+                box.classList.add('bg-light');
+            });
+
+            // Aktifkan tombol kirim ulang
             resendBtn.disabled = false;
         }
     }, 1000);
 
-    // Enable resend after 60s
-    setTimeout(() => { resendBtn.disabled = false; }, 60000);
+    // Aktifkan resend setelah 30 detik
+    setTimeout(() => {
+        if (!isExpired) resendBtn.disabled = false;
+    }, 30000);
 });
 </script>
 @endsection

@@ -94,8 +94,8 @@
                     <div class="icon-box">🔑</div>
 
                     <div class="text-center mb-3">
-                        <h4 class="fw-bold text-dark mb-1">Lupa Password Admin</h4>
-                        <p class="text-muted small">Masukkan email admin yang terdaftar</p>
+                       <h4 class="fw-bold text-dark mb-1">Lupa Password Admin</h4>
+                        <p class="text-muted small">Gunakan email atau WhatsApp admin terdaftar</p>
                     </div>
 
                     {{-- Step Indicator --}}
@@ -136,36 +136,83 @@
                     @endif
 
                     {{-- Form --}}
-                    <form method="POST" action="{{ route('admin.password.email') }}" id="forgotForm" novalidate>
-                        @csrf
+                  {{-- Toggle Metode --}}
+<div class="d-flex gap-2 mb-4">
+    <button type="button"
+            class="btn btn-sm flex-fill fw-semibold"
+            id="btnEmail"
+            style="background:#11998e;color:white;border-radius:20px;"
+            onclick="switchMethod('email')">
+        📧 Email
+    </button>
+    <button type="button"
+            class="btn btn-sm flex-fill fw-semibold"
+            id="btnWa"
+            style="background:white;color:#11998e;border:2px solid #11998e;border-radius:20px;"
+            onclick="switchMethod('whatsapp')">
+        💬 WhatsApp
+    </button>
+</div>
 
-                        <div class="mb-4">
-                            <label for="email" class="form-label fw-semibold">Email Admin</label>
-                            <input type="email"
-                                   class="form-control @error('email') is-invalid @enderror"
-                                   id="email"
-                                   name="email"
-                                   value="{{ old('email') }}"
-                                   placeholder="admin@example.com"
-                                   autofocus
-                                   required>
-                            <div class="form-text text-muted small">
-                                ℹ️ Hanya akun admin yang terdaftar di sistem
-                            </div>
-                            @error('email')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                            <div id="emailError" class="text-danger mt-1" style="display:none;">
-                                <small>⚠️ Format email tidak valid</small>
-                            </div>
-                        </div>
+<form method="POST" action="{{ route('admin.password.email') }}" id="forgotForm" novalidate>
+    @csrf
+    <input type="hidden" name="method" id="methodInput" value="email">
 
-                        <div class="d-grid mb-3">
-                            <button type="submit" class="btn btn-primary-custom py-2 fw-bold" id="submitBtn" disabled>
-                                📨 Kirim Kode Verifikasi
-                            </button>
+    {{-- EMAIL SECTION --}}
+    <div id="emailSection">
+        <div class="mb-4">
+            <label for="email" class="form-label fw-semibold">Email Admin</label>
+            <input type="email"
+                   class="form-control @error('email') is-invalid @enderror"
+                   id="email"
+                   name="email"
+                   value="{{ old('email') }}"
+                   placeholder="admin@example.com"
+                   autofocus>
+            <div class="form-text text-muted small">
+                ℹ️ Hanya akun admin yang terdaftar di sistem
+            </div>
+            @error('email')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+            <div id="emailError" class="text-danger mt-1" style="display:none;">
+                <small>⚠️ Format email tidak valid</small>
+            </div>
+        </div>
+    </div>
+
+    {{-- WHATSAPP SECTION --}}
+    <div id="waSection" style="display:none;">
+        <div class="mb-4">
+            <label for="phone" class="form-label fw-semibold">Nomor WhatsApp Admin</label>
+            <div class="input-group">
+                <span class="input-group-text fw-semibold" style="color:#11998e;">+62</span>
+                <input type="tel"
+                       class="form-control @error('phone') is-invalid @enderror"
+                       id="phone"
+                       name="phone"
+                       value="{{ old('phone') }}"
+                       placeholder="8123456789"
+                       inputmode="numeric">
                         </div>
-                    </form>
+                        <div class="form-text text-muted small">
+                            ℹ️ Masukkan nomor tanpa angka 0 di depan
+                        </div>
+                        @error('phone')
+                            <div class="text-danger mt-1 small">{{ $message }}</div>
+                        @enderror
+                        <div id="phoneError" class="text-danger mt-1" style="display:none;">
+                            <small>⚠️ Nomor WhatsApp tidak valid (min 9 digit)</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid mb-3">
+                    <button type="submit" class="btn btn-primary-custom py-2 fw-bold" id="submitBtn" disabled>
+                        📨 Kirim Kode Verifikasi
+                    </button>
+                </div>
+            </form>
 
                     <div class="text-center">
                         <a href="{{ route('admin.login') }}" class="text-decoration-none small" style="color:#11998e;">
@@ -181,30 +228,74 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const emailInput = document.getElementById('email');
-    const submitBtn  = document.getElementById('submitBtn');
-    const emailError = document.getElementById('emailError');
+let currentMethod = 'email';
 
-    function validateEmail(val) {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) && !/\s/.test(val);
+function switchMethod(method) {
+    currentMethod = method;
+    document.getElementById('methodInput').value = method;
+
+    const btnEmail  = document.getElementById('btnEmail');
+    const btnWa     = document.getElementById('btnWa');
+    const emailSec  = document.getElementById('emailSection');
+    const waSec     = document.getElementById('waSection');
+
+    if (method === 'email') {
+        btnEmail.style.background = '#11998e';
+        btnEmail.style.color      = 'white';
+        btnEmail.style.border     = 'none';
+        btnWa.style.background    = 'white';
+        btnWa.style.color         = '#11998e';
+        btnWa.style.border        = '2px solid #11998e';
+        emailSec.style.display    = 'block';
+        waSec.style.display       = 'none';
+    } else {
+        btnWa.style.background    = '#11998e';
+        btnWa.style.color         = 'white';
+        btnWa.style.border        = 'none';
+        btnEmail.style.background = 'white';
+        btnEmail.style.color      = '#11998e';
+        btnEmail.style.border     = '2px solid #11998e';
+        emailSec.style.display    = 'none';
+        waSec.style.display       = 'block';
     }
 
-    emailInput.addEventListener('input', function () {
-        const val = this.value.trim();
-        if (val.length > 0 && !validateEmail(val)) {
-            emailError.style.display = 'block';
-            this.classList.add('is-invalid');
-            submitBtn.disabled = true;
-        } else {
-            emailError.style.display = 'none';
-            this.classList.remove('is-invalid');
-            submitBtn.disabled = val.length === 0;
-        }
+    document.getElementById('submitBtn').disabled = true;
+    validateInput();
+}
+
+function validateInput() {
+    const submitBtn = document.getElementById('submitBtn');
+
+    if (currentMethod === 'email') {
+        const val   = document.getElementById('email').value.trim();
+        const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+        document.getElementById('emailError').style.display =
+            (val.length > 0 && !valid) ? 'block' : 'none';
+        submitBtn.disabled = !valid;
+    } else {
+        const val   = document.getElementById('phone').value.replace(/\D/g, '');
+        const valid = val.length >= 9 && val.length <= 13;
+        document.getElementById('phoneError').style.display =
+            (val.length > 0 && !valid) ? 'block' : 'none';
+        submitBtn.disabled = !valid;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('email').addEventListener('input', function () {
+        this.value = this.value.replace(/\s/g, '');
+        validateInput();
     });
 
-    emailInput.addEventListener('keydown', function (e) {
-        if (e.key === ' ') e.preventDefault();
+    document.getElementById('phone').addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '');
+        validateInput();
+    });
+
+    ['email', 'phone'].forEach(id => {
+        document.getElementById(id).addEventListener('keydown', function (e) {
+            if (e.key === ' ') e.preventDefault();
+        });
     });
 });
 </script>

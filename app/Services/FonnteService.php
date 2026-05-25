@@ -3,21 +3,67 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class FonnteService
 {
-    public function sendOTP($nomor, $otp)
+    protected string $token;
+    protected string $apiUrl = 'https://api.fonnte.com/send';
+
+    public function __construct()
     {
-        // Format nomor: 08xxx → 628xxx
-        $nomor = '62' . ltrim($nomor, '0');
+        $this->token = config('services.fonnte.token');
+    }
 
-        $response = Http::withHeaders([
-            'Authorization' => env('FONNTE_TOKEN'),
-        ])->post('https://api.fonnte.com/send', [
-            'target' => $nomor,
-            'message' => "Kode OTP reset password Anda: *$otp*\n\nBerlaku selama 10 menit. Jangan berikan kode ini kepada siapapun.",
-        ]);
+    /**
+     * Kirim pesan WhatsApp via Fonnte
+     *
+     * @param string $phone  Nomor WA tujuan (format: 628xxx)
+     * @param string $message Isi pesan
+     * @return bool
+     */
+    public function sendMessage(string $phone, string $message): bool
+    {
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => $this->token,
+            ])->post($this->apiUrl, [
+                'target'  => $phone,
+                'message' => $message,
+                'countryCode' => '62', // Indonesia
+            ]);
 
-        return $response->json();
+            $body = $response->json();
+
+            if ($response->successful() && isset($body['status']) && $body['status'] === true) {
+                return true;
+            }
+
+            Log::error('Fonnte send failed', ['response' => $body]);
+            return false;
+
+        } catch (\Exception $e) {
+            Log::error('Fonnte exception: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Format nomor WA ke format internasional
+     * Misal: 08123 → 628123, +628123 → 628123
+     */
+   public static function formatPhone(string $phone): string
+{
+    $phone = preg_replace('/[^\d]/', '', $phone); // hapus +, strip, spasi, dll
+
+        if (str_starts_with($phone, '0')) {
+            $phone = '62' . substr($phone, 1);
+        } elseif (str_starts_with($phone, '62')) {
+            // sudah benar
+        } else {
+            $phone = '62' . $phone;
+        }
+
+        return $phone;
     }
 }

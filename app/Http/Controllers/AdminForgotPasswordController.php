@@ -10,61 +10,140 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use App\Services\FonnteService;
 
 class AdminForgotPasswordController extends Controller
 {
     // ─────────────────────────────────────────────────────────
     // STEP 1 — Tampilkan form input email
     // ─────────────────────────────────────────────────────────
+
+protected FonnteService $fonnte;
+
+public function __construct(FonnteService $fonnte)
+{
+    $this->fonnte = $fonnte;
+}
+
     public function showForgotForm()
     {
+        
         return view('admin.forgot-password');
     }
 
     // ─────────────────────────────────────────────────────────
     // STEP 1 — Proses: validasi email & kirim OTP
     // ─────────────────────────────────────────────────────────
-    public function sendOtp(Request $request)
-    {
-        $request->validate([
-            'email' => ['required', 'email'],
-        ], [
-            'email.required' => 'Email wajib diisi.',
-            'email.email'    => 'Format email tidak valid.',
-        ]);
+   public function sendOtp(Request $request)
+{
+    $method = $request->input('method', 'email');
 
-        $admin = User::where('email', $request->email)
-                     ->where('is_admin', true)
-                     ->first();
-
-        if (!$admin) {
-            return back()->withErrors([
-                'email' => 'Email tidak terdaftar sebagai akun admin.',
-            ])->withInput();
-        }
-
-        $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-
-        DB::table('password_reset_tokens')->where('email', $request->email)->delete();
-        DB::table('password_reset_tokens')->insert([
-            'email'      => $request->email,
-            'token'      => Hash::make($otp),
-            'created_at' => Carbon::now(),
-        ]);
-
-        Mail::send('emails.admin-otp', [
-            'otp'  => $otp,
-            'name' => $admin->name ?? 'Admin',
-        ], function ($message) use ($request) {
-            $message->to($request->email)
-                    ->subject('Kode Verifikasi Reset Password Admin - Bibit Cabai');
-        });
-
-        $request->session()->put('admin_reset_email', $request->email);
-
-        return redirect()->route('admin.password.verify-otp-form')
-                         ->with('success', 'Kode OTP telah dikirim ke email admin Anda. Berlaku 10 menit.');
+    if ($method === 'whatsapp') {
+        return $this->sendOtpViaWhatsapp($request);
     }
+
+    return $this->sendOtpViaEmail($request);
+}
+
+private function sendOtpViaEmail(Request $request)
+{
+    $request->validate([
+        'email' => ['required', 'email'],
+    ], [
+        'email.required' => 'Email wajib diisi.',
+        'email.email'    => 'Format email tidak valid.',
+    ]);
+
+    $admin = User::where('email', $request->email)
+                 ->where('is_admin', true)
+                 ->first();
+
+    if (!$admin) {
+        return back()->withErrors([
+            'email' => 'Email tidak terdaftar sebagai akun admin.',
+        ])->withInput();
+    }
+
+    $otp = $this->generateAndStoreOtp($request->email);
+
+    Mail::send('emails.admin-otp', [
+        'otp'  => $otp,
+        'name' => $admin->name ?? 'Admin',
+    ], function ($message) use ($request) {
+        $message->to($request->email)
+                ->subject('Kode Verifikasi Reset Password Admin - Bibit Cabai');
+    });
+
+    $request->session()->put('admin_reset_email', $request->email);
+    $request->session()->put('admin_reset_method', 'email');
+
+    return redirect()->route('admin.password.verify-otp-form')
+                     ->with('success', 'Kode OTP telah dikirim ke email admin Anda. Berlaku 3 menit.');
+}
+
+private function sendOtpViaWhatsapp(Request $request)
+{
+    $request->validate([
+        'phone' => ['required', 'digits_between:10,15'],
+    ], [
+        'phone.required'       => 'Nomor WhatsApp wajib diisi.',
+        'phone.digits_between' => 'Nomor WhatsApp tidak valid (10-15 digit).',
+    ]);
+
+    $phoneFormatted = FonnteService::formatPhone($request->phone);
+
+    // Cari user dengan nomor WA ini — WAJIB is_admin = true
+    $admin = User::where('is_admin', true)
+                 ->where(function ($q) use ($phoneFormatted, $request) {
+                     $q->where('phone', $phoneFormatted)
+                       ->orWhere('phone', '+' . $phoneFormatted)
+                       ->orWhere('phone', $request->phone)
+                       ->orWhere('phone', '0' . ltrim($request->phone, '0'));
+                 })
+                 ->first();
+
+    if (!$admin) {
+        return back()->withErrors([
+            'phone' => 'Nomor ini tidak terdaftar sebagai admin.',
+        ])->withInput();
+    }
+
+    $otp = $this->generateAndStoreOtp($admin->email);
+
+    $pesan = "🛡️ *Bibit Cabai Bondowoso — Admin*\n\n"
+           . "Halo {$admin->name},\n\n"
+           . "Kode verifikasi reset password admin Anda:\n\n"
+           . "*{$otp}*\n\n"
+           . "Berlaku selama *3 menit*.\n"
+           . "Jangan berikan kode ini kepada siapapun.";
+
+    $sent = $this->fonnte->sendMessage($phoneFormatted, $pesan);
+
+    if (!$sent) {
+        return back()->with('error', 'Gagal mengirim pesan WhatsApp. Coba lagi.');
+    }
+
+    $request->session()->put('admin_reset_email', $admin->email);
+    $request->session()->put('admin_reset_method', 'whatsapp');
+    $request->session()->put('admin_reset_phone_display', '****' . substr($request->phone, -4));
+
+    return redirect()->route('admin.password.verify-otp-form')
+                     ->with('success', 'Kode OTP dikirim ke WhatsApp admin Anda. Berlaku 3 menit.');
+}
+
+private function generateAndStoreOtp(string $email): string
+{
+    $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+    DB::table('password_reset_tokens')->where('email', $email)->delete();
+    DB::table('password_reset_tokens')->insert([
+        'email'      => $email,
+        'token'      => Hash::make($otp),
+        'created_at' => Carbon::now(),
+    ]);
+
+    return $otp;
+}
 
     // ─────────────────────────────────────────────────────────
     // STEP 2 — Tampilkan form input OTP
@@ -131,33 +210,39 @@ public function verifyOtp(Request $request)
     // ─────────────────────────────────────────────────────────
     // STEP 2 — Kirim ulang OTP
     // ─────────────────────────────────────────────────────────
-    public function resendOtp(Request $request)
-    {
-        $email = $request->session()->get('admin_reset_email');
+   public function resendOtp(Request $request)
+{
+    $email  = $request->session()->get('admin_reset_email');
+    $method = $request->session()->get('admin_reset_method', 'email');
 
-        if (!$email) {
-            return redirect()->route('admin.password.request')
-                             ->with('error', 'Sesi tidak valid. Silakan masukkan email admin kembali.');
+    if (!$email) {
+        return redirect()->route('admin.password.request')
+                         ->with('error', 'Sesi tidak valid.');
+    }
+
+    $admin = User::where('email', $email)->where('is_admin', true)->first();
+    if (!$admin) {
+        return redirect()->route('admin.password.request')
+                         ->with('error', 'Akun admin tidak ditemukan.');
+    }
+
+    $otp = $this->generateAndStoreOtp($email);
+
+    if ($method === 'whatsapp') {
+        $phone = FonnteService::formatPhone(
+            preg_replace('/^\+/', '', $admin->phone)
+        );
+        $pesan = "🛡️ *Bibit Cabai Bondowoso — Admin*\n\n"
+               . "Halo {$admin->name},\n\n"
+               . "Kode verifikasi baru Anda:\n\n"
+               . "*{$otp}*\n\n"
+               . "Berlaku selama *3 menit*.";
+
+        $sent = $this->fonnte->sendMessage($phone, $pesan);
+        if (!$sent) {
+            return back()->with('error', 'Gagal mengirim ulang ke WhatsApp.');
         }
-
-        $admin = User::where('email', $email)
-                     ->where('is_admin', true)
-                     ->first();
-
-        if (!$admin) {
-            return redirect()->route('admin.password.request')
-                             ->with('error', 'Email tidak ditemukan.');
-        }
-
-        $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-
-        DB::table('password_reset_tokens')->where('email', $email)->delete();
-        DB::table('password_reset_tokens')->insert([
-            'email'      => $email,
-            'token'      => Hash::make($otp),
-            'created_at' => Carbon::now(),
-        ]);
-
+    } else {
         Mail::send('emails.admin-otp', [
             'otp'  => $otp,
             'name' => $admin->name ?? 'Admin',
@@ -165,9 +250,10 @@ public function verifyOtp(Request $request)
             $message->to($email)
                     ->subject('Kode OTP Baru (Kirim Ulang) - Bibit Cabai Admin');
         });
-
-        return back()->with('success', 'Kode OTP baru telah dikirim ke email admin Anda.');
     }
+
+    return back()->with('success', 'Kode OTP baru telah dikirim.');
+}
 
     // ─────────────────────────────────────────────────────────
     // STEP 3 — Tampilkan form password baru

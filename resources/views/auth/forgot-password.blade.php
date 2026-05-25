@@ -16,87 +16,123 @@
 
                 <div class="card-body p-4">
 
-                    {{-- Step Indicator --}}
-                    <div class="d-flex align-items-center justify-content-center mb-4">
-                        <div class="step-item active">
-                            <div class="step-circle bg-success text-white">1</div>
-                            <div class="step-label text-success fw-bold">Email</div>
-                        </div>
-                        <div class="step-line bg-secondary mx-2"></div>
-                        <div class="step-item">
-                            <div class="step-circle bg-secondary text-white">2</div>
-                            <div class="step-label text-secondary">Kode OTP</div>
-                        </div>
-                        <div class="step-line bg-secondary mx-2"></div>
-                        <div class="step-item">
-                            <div class="step-circle bg-secondary text-white">3</div>
-                            <div class="step-label text-secondary">Password Baru</div>
-                        </div>
-                    </div>
+    {{-- Step Indicator --}}
+    <div class="d-flex align-items-center justify-content-center mb-4">
+        <div class="step-item active">
+            <div class="step-circle bg-success text-white">1</div>
+            <div class="step-label text-success fw-bold">Identitas</div>
+        </div>
+        <div class="step-line bg-secondary mx-2"></div>
+        <div class="step-item">
+            <div class="step-circle bg-secondary text-white">2</div>
+            <div class="step-label text-secondary">Kode OTP</div>
+        </div>
+        <div class="step-line bg-secondary mx-2"></div>
+        <div class="step-item">
+            <div class="step-circle bg-secondary text-white">3</div>
+            <div class="step-label text-secondary">Password Baru</div>
+        </div>
+    </div>
 
-                    @if(session('error'))
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                    @endif
+    @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show">
+        <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    @endif
 
-                    <p class="text-muted text-center mb-4">
-                        <i class="fas fa-info-circle text-success me-1"></i>
-                        Kami akan mengirim kode verifikasi ke email Anda untuk mereset password.
-                    </p>
+    {{-- Toggle Metode --}}
+    <div class="d-flex gap-2 mb-4" id="methodToggle">
+        <button type="button" class="btn btn-success flex-fill" id="btnEmail" onclick="switchMethod('email')">
+            <i class="fas fa-envelope me-1"></i> Gunakan Email
+        </button>
+        <button type="button" class="btn btn-outline-success flex-fill" id="btnWa" onclick="switchMethod('whatsapp')">
+            <i class="fab fa-whatsapp me-1"></i> Gunakan WhatsApp
+        </button>
+    </div>
 
-                    <form method="POST" action="{{ route('password.email') }}" id="forgotForm">
-                        @csrf
+    <form method="POST" action="{{ route('password.email') }}" id="forgotForm">
+        @csrf
+        <input type="hidden" name="method" id="methodInput" value="email">
 
-                        <div class="mb-4">
-                            <label for="email" class="form-label fw-semibold">
-                                Email <span class="text-danger">*</span>
-                            </label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light">
-                                    <i class="fas fa-envelope text-success"></i>
-                                </span>
-                                <input type="email"
-                                       class="form-control @error('email') is-invalid @enderror"
-                                       id="email"
-                                       name="email"
-                                       value="{{ old('email') }}"
-                                       required
-                                       autofocus
-                                       placeholder="contoh@gmail.com">
-                            </div>
-                            <div class="form-text text-muted">
-                                <small><i class="fas fa-info-circle"></i> Gunakan email @gmail.com yang terdaftar</small>
-                            </div>
-                            @error('email')
-                            <div class="text-danger mt-1"><small>{{ $message }}</small></div>
-                            @enderror
-                            <div id="emailError" class="text-danger mt-1" style="display: none;">
-                                <small>Email harus menggunakan domain @gmail.com</small>
-                            </div>
-                        </div>
-
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-success btn-lg" id="submitBtn" disabled>
-                                <i class="fas fa-paper-plane me-2"></i>Kirim Kode Verifikasi
-                            </button>
-                        </div>
-                    </form>
-
-                    <hr class="my-4">
-
-                    <div class="text-center">
-                        <a href="{{ route('login') }}" class="text-success text-decoration-none">
-                            <i class="fas fa-arrow-left me-1"></i>Kembali ke Halaman Login
-                        </a>
-                    </div>
+        {{-- Email Section --}}
+        <div id="emailSection">
+            <p class="text-muted text-center mb-3 small">
+                <i class="fas fa-info-circle text-success me-1"></i>
+                Kode verifikasi akan dikirim ke email Anda.
+            </p>
+            <div class="mb-4">
+                <label for="email" class="form-label fw-semibold">
+                    Email <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light">
+                        <i class="fas fa-envelope text-success"></i>
+                    </span>
+                    <input type="email"
+                           class="form-control @error('email') is-invalid @enderror"
+                           id="email" name="email"
+                           value="{{ old('email') }}"
+                           placeholder="contoh@gmail.com">
+                </div>
+                <div class="form-text text-muted">
+                    <small><i class="fas fa-info-circle"></i> Gunakan email @gmail.com yang terdaftar</small>
+                </div>
+                @error('email')
+                <div class="text-danger mt-1"><small>{{ $message }}</small></div>
+                @enderror
+                <div id="emailError" class="text-danger mt-1" style="display:none;">
+                    <small>Email harus menggunakan domain @gmail.com</small>
                 </div>
             </div>
         </div>
+
+        {{-- WhatsApp Section --}}
+        <div id="waSection" style="display:none;">
+            <p class="text-muted text-center mb-3 small">
+                <i class="fab fa-whatsapp text-success me-1"></i>
+                Kode verifikasi akan dikirim via WhatsApp.
+            </p>
+            <div class="mb-4">
+                <label for="phone" class="form-label fw-semibold">
+                    Nomor WhatsApp <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light fw-semibold text-success">+62</span>
+                    <input type="tel"
+                           class="form-control @error('phone') is-invalid @enderror"
+                           id="phone" name="phone"
+                           value="{{ old('phone') }}"
+                           placeholder="8123456789"
+                           inputmode="numeric">
+                </div>
+                <div class="form-text text-muted">
+                    <small><i class="fas fa-info-circle"></i> Masukkan nomor tanpa angka 0 di depan</small>
+                </div>
+                @error('phone')
+                <div class="text-danger mt-1"><small>{{ $message }}</small></div>
+                @enderror
+                <div id="phoneError" class="text-danger mt-1" style="display:none;">
+                    <small>Nomor WhatsApp tidak valid</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-grid">
+            <button type="submit" class="btn btn-success btn-lg" id="submitBtn" disabled>
+                <i class="fas fa-paper-plane me-2"></i>
+                <span id="submitText">Kirim Kode Verifikasi</span>
+            </button>
+        </div>
+    </form>
+
+    <hr class="my-4">
+    <div class="text-center">
+        <a href="{{ route('login') }}" class="text-success text-decoration-none">
+            <i class="fas fa-arrow-left me-1"></i>Kembali ke Halaman Login
+        </a>
     </div>
 </div>
-
 <style>
 .step-item {
     display: flex;
@@ -126,28 +162,57 @@
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const emailInput = document.getElementById('email');
+let currentMethod = 'email';
+
+function switchMethod(method) {
+    currentMethod = method;
+    document.getElementById('methodInput').value = method;
+
+    const btnEmail = document.getElementById('btnEmail');
+    const btnWa = document.getElementById('btnWa');
+    const emailSection = document.getElementById('emailSection');
+    const waSection = document.getElementById('waSection');
     const submitBtn = document.getElementById('submitBtn');
-    const emailError = document.getElementById('emailError');
 
-    emailInput.addEventListener('input', function () {
-        const val = this.value;
-        const gmailPattern = /@gmail\.com$/;
-        const hasSpaces = /\s/.test(val);
+    if (method === 'email') {
+        btnEmail.className = 'btn btn-success flex-fill';
+        btnWa.className = 'btn btn-outline-success flex-fill';
+        emailSection.style.display = 'block';
+        waSection.style.display = 'none';
+    } else {
+        btnEmail.className = 'btn btn-outline-success flex-fill';
+        btnWa.className = 'btn btn-success flex-fill';
+        emailSection.style.display = 'none';
+        waSection.style.display = 'block';
+    }
 
-        if (val.length > 0 && (!gmailPattern.test(val) || hasSpaces)) {
-            emailError.style.display = 'block';
-            this.classList.add('is-invalid');
-            submitBtn.disabled = true;
-        } else {
-            emailError.style.display = 'none';
-            this.classList.remove('is-invalid');
-            submitBtn.disabled = val.length === 0;
-        }
+    submitBtn.disabled = true;
+    validateInput();
+}
+
+function validateInput() {
+    const submitBtn = document.getElementById('submitBtn');
+
+    if (currentMethod === 'email') {
+        const val = document.getElementById('email').value;
+        const valid = /^[^\s]+@gmail\.com$/.test(val);
+        document.getElementById('emailError').style.display = (val.length > 0 && !valid) ? 'block' : 'none';
+        submitBtn.disabled = !valid;
+    } else {
+        const val = document.getElementById('phone').value.replace(/\D/g, '');
+        const valid = val.length >= 9 && val.length <= 13;
+        document.getElementById('phoneError').style.display = (val.length > 0 && !valid) ? 'block' : 'none';
+        submitBtn.disabled = !valid;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('email').addEventListener('input', validateInput);
+    document.getElementById('phone').addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '');
+        validateInput();
     });
-
-    emailInput.addEventListener('keydown', function (e) {
+    document.getElementById('phone').addEventListener('keydown', function (e) {
         if (e.key === ' ') e.preventDefault();
     });
 });
