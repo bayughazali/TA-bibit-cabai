@@ -11,41 +11,55 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Mail\AdminOrderNotification;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 class CheckoutController extends Controller
 {
     public function index(Request $request)
-    {
-        try {
-            $productId = $request->get('product_id');
-            $quantity = $request->get('quantity', 1);
-            
-            if (!$productId) {
-                return redirect()->route('home')->with('error', 'Produk tidak ditemukan');
-            }
-            
-            $product = Product::find($productId);
-            
-            if (!$product) {
-                return redirect()->route('home')->with('error', 'Produk tidak ditemukan');
-            }
-            
-            if ($product->stock < $quantity) {
-                return redirect()->back()->with('error', 'Stok tidak mencukupi. Stok tersedia: ' . $product->stock);
-            }
-            
-            $subtotal = $product->price * $quantity;
-            $ongkir = 15000;
-            $total = $subtotal + $ongkir;
-            
-            // Panggil view checkout.index (form checkout)
-            return view('checkout.index', compact('product', 'quantity', 'subtotal', 'ongkir', 'total'));
-            
-        } catch (\Exception $e) {
-            Log::error('Checkout Index Error: ' . $e->getMessage());
-            return redirect()->route('home')->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+{
+    try {
+        $productId = $request->get('product_id');
+        $quantity  = $request->get('quantity', 1);
+
+        if (!$productId) {
+            return redirect()->route('home')->with('error', 'Produk tidak ditemukan');
         }
+
+        $product = Product::find($productId);
+
+        if (!$product) {
+            return redirect()->route('home')->with('error', 'Produk tidak ditemukan');
+        }
+
+        if ($product->stock < $quantity) {
+            return redirect()->back()->with('error', 'Stok tidak mencukupi. Stok tersedia: ' . $product->stock);
+        }
+
+        $subtotal = $product->price * $quantity;
+        $ongkir   = 15000;
+        $total    = $subtotal + $ongkir;
+
+        $prefill = null;
+        if ($request->get('use_saved') && Auth::check()) {
+            $user    = Auth::user();
+            $prefill = [
+                'name'        => $user->name,
+                'phone'       => $user->phone ?? '',
+                'email'       => $user->email,
+                'address'     => $user->address ?? '',
+                'city'        => $user->city ?? '',
+                'postal_code' => $user->postal_code ?? '68200',
+            ];
+        }
+
+        return view('checkout.index', compact('product', 'quantity', 'subtotal', 'ongkir', 'total', 'prefill'));
+
+    } catch (\Exception $e) {
+        Log::error('Checkout Index Error: ' . $e->getMessage());
+        return redirect()->route('home')->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
     }
+}
     
     public function process(Request $request)
 {
@@ -53,7 +67,7 @@ class CheckoutController extends Controller
         'product_id'     => 'required|exists:products,id',
         'quantity'       => 'required|integer|min:1',
         'name'           => 'required|string|min:8|max:255',
-        'phone'          => ['required', 'string', 'min:11', 'regex:/^\+62[0-9]{8,}$/'],
+        'phone'          =>  ['required', 'string', 'min:10', 'max:15'],
         'email'          => 'required|email|min:8|max:255',
         'address'        => ['required', 'string', 'min:20',
                              'regex:/(?=.*[Jj]l\.?|.*[Jj]alan)(?=.*[Nn]o\.?)(?=.*[Rr][Tt])(?=.*[Rr][Ww])/'],
@@ -65,9 +79,9 @@ class CheckoutController extends Controller
     ], [
         'name.required'          => 'Nama lengkap wajib diisi.',
         'name.min'               => 'Nama lengkap minimal 8 karakter.',
-        'phone.required'         => 'Nomor telepon wajib diisi.',
-        'phone.min'              => 'Nomor telepon minimal 11 karakter.',
-        'phone.regex'            => 'Nomor telepon harus diawali +62 dan hanya berisi angka. Contoh: +6281234567890',
+       'phone.required' => 'Nomor telepon wajib diisi.',
+        'phone.min'      => 'Nomor telepon minimal 10 karakter.',
+        'phone.max'      => 'Nomor telepon maksimal 15 karakter.',
         'email.required'         => 'Email wajib diisi.',
         'email.email'            => 'Format email tidak valid.',
         'email.min'              => 'Email minimal 8 karakter.',
@@ -230,4 +244,68 @@ class CheckoutController extends Controller
         'order_status'   => $transaksi->order_status,
     ]);
 }
+public function getLastAddress()
+{
+    $user = Auth::user();
+    return response()->json([
+        'name'    => $user->name,
+        'phone'   => $user->phone ?? '',
+        'email'   => $user->email,
+        'address' => $user->address ?? '',
+        'city'    => $user->city ?? '',
+        'postal_code' => $user->postal_code ?? '',
+    ]);
+}
+
+// Tambahkan method ini di CheckoutController
+
+public function konfirmasiPembayaran(Request $request, $id)
+{
+    $request->validate([
+        'payment_proof' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+    ], [
+        'payment_proof.required' => 'Bukti pembayaran wajib diupload.',
+        'payment_proof.image'    => 'File harus berupa gambar.',
+        'payment_proof.mimes'    => 'Format gambar harus JPG atau PNG.',
+        'payment_proof.max'      => 'Ukuran gambar maksimal 2MB.',
+    ]);
+
+    $transaksi = Transaksi::findOrFail($id);
+
+    // Simpan bukti bayar
+    $path = $request->file('payment_proof')->store('payment_proofs', 'public');
+    $transaksi->update([
+        'payment_proof'  => $path,
+        'payment_status' => 'pending',// menunggu konfirmasi admin
+    ]);
+
+    // Kirim notifikasi WA ke admin via Fonnte
+    $this->kirimNotifWaAdmin($transaksi);
+
+   return redirect()->route('home')
+                 ->with('success', 'Bukti pembayaran berhasil dikirim! Admin akan segera mengkonfirmasi.');
+}
+
+private function kirimNotifWaAdmin(Transaksi $transaksi)
+{
+    $adminPhone = config('app.admin_phone'); // simpan di .env: ADMIN_PHONE=628131830561
+    $fonnteToken = config('app.fonnte_token'); // simpan di .env: FONNTE_TOKEN=xxxxx
+
+    $pesan = "🔔 *Konfirmasi Pembayaran Masuk!*\n\n"
+           . "📋 Invoice: *{$transaksi->invoice_number}*\n"
+           . "👤 Pembeli: {$transaksi->customer_name}\n"
+           . "📞 Telepon: {$transaksi->customer_phone}\n"
+           . "💳 Metode: " . strtoupper($transaksi->payment_method) . "\n"
+           . "💰 Total: Rp " . number_format($transaksi->total_amount, 0, ',', '.') . "\n\n"
+           . "Silakan cek dan approve di panel admin:\n"
+           . url("/admin/transaksi/{$transaksi->id}");
+
+    Http::withHeaders([
+        'Authorization' => $fonnteToken,
+    ])->post('https://api.fonnte.com/send', [
+        'target'  => $adminPhone,
+        'message' => $pesan,
+    ]);
+}
+
 }

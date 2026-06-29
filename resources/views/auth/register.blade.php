@@ -76,17 +76,17 @@
                                            name="phone" 
                                            value="{{ old('phone') }}"
                                            required
-                                           placeholder="+6281234567890">
+                                placeholder="081234567890">
                                 </div>
                                 <div class="form-text text-muted">
-                                    <small><i class="fas fa-info-circle"></i> Harus diawali +62, contoh: +6281234567890</small>
+                                    <small><i class="fas fa-info-circle"></i> Nomor telepon minimal 10 karakter</small>
                                 </div>
                                 @error('phone')
                                 <div class="text-danger mt-1"><small>{{ $message }}</small></div>
                                 @enderror
                                 <div id="phoneError" class="text-danger mt-1" style="display: none;">
-                                    <small>Nomor telepon harus diawali +62 dan hanya boleh berisi angka</small>
-                                </div>
+                                <small>Nomor telepon minimal 10 karakter</small>
+                            </div>
                             </div>
 
                             <div class="col-md-6">
@@ -99,17 +99,17 @@
                                            name="address" 
                                            value="{{ old('address') }}"
                                            required
-                                           placeholder="Jl. Contoh No. 123">
+                                          placeholder="Jl. Contoh No. 12, RT 01/RW 02, Desa Kademangan">
                                 </div>
                                 <div class="form-text text-muted">
-                                    <small><i class="fas fa-info-circle"></i> Alamat minimal 12 karakter</small>
+                                    <small><i class="fas fa-info-circle"></i> Wajib lengkap: Nama Jalan · No. Rumah · RT/RW · Desa/Kelurahan</small>
                                 </div>
                                 @error('address')
                                 <div class="text-danger mt-1"><small>{{ $message }}</small></div>
                                 @enderror
                                 <div id="addressError" class="text-danger mt-1" style="display: none;">
-                                    <small>Alamat minimal harus 12 karakter</small>
-                                </div>
+                                <small>Alamat terlalu pendek, harap isi lengkap (minimal 20 karakter)</small>
+                            </div>
                             </div>
 
                             <div class="col-md-6">
@@ -254,25 +254,20 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     phoneInput.addEventListener('input', function() {
-        const phoneError = document.getElementById('phoneError');
-        const numberPattern = /^[0-9]+$/;
-        
-        // Remove non-numeric characters
-        
-        
-        if (!/^\+62[0-9]{9,15}$/.test(this.value) && this.value.length > 0) {
-            phoneError.style.display = 'block';
-            this.classList.add('is-invalid');
-        } else {
-            phoneError.style.display = 'none';
-            this.classList.remove('is-invalid');
-        }
-    });
+    const phoneError = document.getElementById('phoneError');
+    if (this.value.length < 10 && this.value.length > 0) {
+        phoneError.style.display = 'block';
+        this.classList.add('is-invalid');
+    } else {
+        phoneError.style.display = 'none';
+        this.classList.remove('is-invalid');
+    }
+});
 
     addressInput.addEventListener('input', function() {
         const addressError = document.getElementById('addressError');
-        if (this.value.length < 12) {
-            addressError.style.display = 'block';
+        if (this.value.length < 20) {
+    addressError.style.display = 'block';
             this.classList.add('is-invalid');
         } else {
             addressError.style.display = 'none';
@@ -327,8 +322,8 @@ document.addEventListener('DOMContentLoaded', function() {
         let isValid = true;
         
         // Check all validations
-        if (nameInput.value.length < 12) {
-            document.getElementById('nameError').style.display = 'block';
+        if (nameInput.value.length < 8) {
+    document.getElementById('nameError').style.display = 'block';
             nameInput.classList.add('is-invalid');
             isValid = false;
         }
@@ -340,14 +335,14 @@ document.addEventListener('DOMContentLoaded', function() {
             isValid = false;
         }
         
-        if (!/^\+62[0-9]{9,15}$/.test(phoneInput.value)) {
-            document.getElementById('phoneError').style.display = 'block';
-            phoneInput.classList.add('is-invalid');
-            isValid = false;
-        }
+       if (phoneInput.value.length < 10) {
+    document.getElementById('phoneError').style.display = 'block';
+    phoneInput.classList.add('is-invalid');
+    isValid = false;
+}
         
-        if (addressInput.value.length < 12) {
-            document.getElementById('addressError').style.display = 'block';
+        if (addressInput.value.length < 20) {
+    document.getElementById('addressError').style.display = 'block';
             addressInput.classList.add('is-invalid');
             isValid = false;
         }

@@ -18,7 +18,7 @@ class AdminForgotPasswordController extends Controller
     // STEP 1 — Tampilkan form input email
     // ─────────────────────────────────────────────────────────
 
-protected FonnteService $fonnte;
+protected $fonnte;  // ✅
 
 public function __construct(FonnteService $fonnte)
 {
@@ -83,24 +83,27 @@ private function sendOtpViaEmail(Request $request)
 
 private function sendOtpViaWhatsapp(Request $request)
 {
-    $request->validate([
-        'phone' => ['required', 'digits_between:10,15'],
-    ], [
-        'phone.required'       => 'Nomor WhatsApp wajib diisi.',
-        'phone.digits_between' => 'Nomor WhatsApp tidak valid (10-15 digit).',
-    ]);
+   $request->validate([
+    'phone' => ['required', 'min:10', 'max:15'],
+], [
+    'phone.required' => 'Nomor WhatsApp wajib diisi.',
+    'phone.min'      => 'Nomor WhatsApp minimal 10 digit.',
+    'phone.max'      => 'Nomor WhatsApp maksimal 15 digit.',
+]);
 
-    $phoneFormatted = FonnteService::formatPhone($request->phone);
+$phone = preg_replace('/\D/', '', $request->phone);
 
-    // Cari user dengan nomor WA ini — WAJIB is_admin = true
-    $admin = User::where('is_admin', true)
-                 ->where(function ($q) use ($phoneFormatted, $request) {
-                     $q->where('phone', $phoneFormatted)
-                       ->orWhere('phone', '+' . $phoneFormatted)
-                       ->orWhere('phone', $request->phone)
-                       ->orWhere('phone', '0' . ltrim($request->phone, '0'));
-                 })
-                 ->first();
+$admin = User::where('is_admin', true)
+             ->where(function ($q) use ($phone, $request) {
+                 $q->where('phone', $phone)
+                   ->orWhere('phone', '+' . $phone)
+                   ->orWhere('phone', $request->phone)
+                   ->orWhere('phone', '0' . ltrim($phone, '0'))
+                   ->orWhere('phone', '+62' . ltrim($phone, '0'));
+             })
+             ->first();
+
+$phoneFormatted = FonnteService::formatPhone($phone);
 
     if (!$admin) {
         return back()->withErrors([
@@ -117,11 +120,21 @@ private function sendOtpViaWhatsapp(Request $request)
            . "Berlaku selama *3 menit*.\n"
            . "Jangan berikan kode ini kepada siapapun.";
 
-    $sent = $this->fonnte->sendMessage($phoneFormatted, $pesan);
+    \Illuminate\Support\Facades\Log::info('Fonnte Admin Debug', [
+    'phone_input'     => $request->phone,
+    'phone_formatted' => $phoneFormatted,
+    'admin_found'     => $admin->name,
+    'admin_phone_db'  => $admin->phone,
+]);
 
-    if (!$sent) {
-        return back()->with('error', 'Gagal mengirim pesan WhatsApp. Coba lagi.');
-    }
+$sent = $this->fonnte->sendMessage($phoneFormatted, $pesan);
+
+if (!$sent) {
+    \Illuminate\Support\Facades\Log::error('Fonnte Admin GAGAL', [
+        'phone_formatted' => $phoneFormatted,
+    ]);
+    return back()->with('error', 'Gagal mengirim pesan WhatsApp. Coba lagi.');
+}
 
     $request->session()->put('admin_reset_email', $admin->email);
     $request->session()->put('admin_reset_method', 'whatsapp');

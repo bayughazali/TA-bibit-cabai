@@ -362,43 +362,134 @@
     </section>
 </div>
 
+<!-- Modal Konfirmasi Alamat -->
+<div class="modal fade" id="addressModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-map-marker-alt me-2"></i>Pilih Alamat Pengiriman
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="savedAddressSection">
+                    <div class="alert alert-success">
+                        <i class="fas fa-user-check me-2"></i>
+                        <strong>Gunakan data yang tersimpan?</strong>
+                    </div>
+                    <div class="card border-success mb-3">
+                        <div class="card-body">
+                            <p class="mb-1"><i class="fas fa-user me-2 text-success"></i><span id="savedName">-</span></p>
+                            <p class="mb-1"><i class="fas fa-phone me-2 text-success"></i><span id="savedPhone">-</span></p>
+                            <p class="mb-1"><i class="fas fa-envelope me-2 text-success"></i><span id="savedEmail">-</span></p>
+                            <p class="mb-0"><i class="fas fa-map-marker-alt me-2 text-success"></i><span id="savedAddress">-</span></p>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-success" id="useSavedAddressBtn">
+                            <i class="fas fa-check-circle me-2"></i>Ya, Gunakan Data Ini
+                        </button>
+                        <button class="btn btn-outline-secondary" id="useNewAddressBtn">
+                            <i class="fas fa-plus-circle me-2"></i>Gunakan Alamat Baru
+                        </button>
+                    </div>
+                </div>
+                <div id="noSavedAddressSection" style="display:none;">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Belum ada data tersimpan. Anda akan mengisi form checkout secara manual.
+                    </div>
+                    <div class="d-grid">
+                        <button class="btn btn-success" id="continueNewBtn">
+                            <i class="fas fa-arrow-right me-2"></i>Lanjut ke Checkout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-// Cek status login dari Laravel (true/false)
 const isLoggedIn = @json(auth()->check());
-const loginUrl = "{{ route('login') }}";
+const loginUrl   = "{{ route('login') }}";
+
+let pendingProductId = null;
+let pendingQtyKey    = null;
+let savedUserData    = null;
 
 function increaseQty(productId, maxStock) {
     const input = document.getElementById('qty-' + productId);
     let value = parseInt(input.value);
-    if (value < maxStock) {
-        input.value = value + 1;
-    }
+    if (value < maxStock) input.value = value + 1;
 }
 
 function decreaseQty(productId) {
     const input = document.getElementById('qty-' + productId);
     let value = parseInt(input.value);
-    if (value > 1) {
-        input.value = value - 1;
-    }
+    if (value > 1) input.value = value - 1;
 }
 
-function checkout(productId) {
+function openAddressModal(productId, qtyKey) {
     if (!isLoggedIn) {
         window.location.href = loginUrl;
         return;
     }
-    const quantity = document.getElementById('qty-' + productId).value;
-    window.location.href = `/checkout?product_id=${productId}&quantity=${quantity}`;
+    pendingProductId = productId;
+    pendingQtyKey    = qtyKey;
+
+    fetch("{{ route('checkout.last-address') }}")
+        .then(r => r.json())
+        .then(data => {
+            savedUserData = data;
+            const hasData = data.name || data.address;
+
+            if (hasData) {
+                document.getElementById('savedName').textContent    = data.name    || '-';
+                document.getElementById('savedPhone').textContent   = data.phone   || '-';
+                document.getElementById('savedEmail').textContent   = data.email   || '-';
+                document.getElementById('savedAddress').textContent =
+                    [data.address, data.city, data.postal_code].filter(Boolean).join(', ') || '-';
+
+                document.getElementById('savedAddressSection').style.display   = 'block';
+                document.getElementById('noSavedAddressSection').style.display = 'none';
+            } else {
+                document.getElementById('savedAddressSection').style.display   = 'none';
+                document.getElementById('noSavedAddressSection').style.display = 'block';
+            }
+
+            new bootstrap.Modal(document.getElementById('addressModal')).show();
+        })
+        .catch(() => {
+            goToCheckout(false);
+        });
+}
+
+function goToCheckout(useSaved) {
+    const qty = document.getElementById('qty-' + pendingQtyKey).value;
+    let url   = `/checkout?product_id=${pendingProductId}&quantity=${qty}`;
+    if (useSaved) url += '&use_saved=1';
+
+    const modalEl = document.getElementById('addressModal');
+    const modal   = bootstrap.Modal.getInstance(modalEl);
+    if (modal) modal.hide();
+
+    window.location.href = url;
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('useSavedAddressBtn')?.addEventListener('click', () => goToCheckout(true));
+    document.getElementById('useNewAddressBtn')?.addEventListener('click',   () => goToCheckout(false));
+    document.getElementById('continueNewBtn')?.addEventListener('click',     () => goToCheckout(false));
+});
+
+function checkout(productId) {
+    openAddressModal(productId, productId);
 }
 
 function checkoutAll(productId, inputKey) {
-    if (!isLoggedIn) {
-        window.location.href = loginUrl;
-        return;
-    }
-    const quantity = document.getElementById('qty-' + inputKey).value;
-    window.location.href = `/checkout?product_id=${productId}&quantity=${quantity}`;
+    openAddressModal(productId, inputKey);
 }
 </script>
 @endsection

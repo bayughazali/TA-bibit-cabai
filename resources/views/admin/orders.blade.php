@@ -256,14 +256,14 @@
         }
 
         .table-card-header {
-            padding: 18px 20px;
-            border-bottom: 1px solid #f3f4f6;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
+    padding: 18px 20px;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: nowrap;
+}
 
         .section-title {
             font-size: 1rem;
@@ -274,12 +274,13 @@
             gap: 8px;
         }
 
-        .table-controls {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
+     .table-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
+    flex-shrink: 0;
+}
 
         /* Table */
         .data-table {
@@ -569,26 +570,31 @@
             </div>
 
             <!-- Table Card -->
-            <div class="table-card">
-                <div class="table-card-header">
-                    <div class="section-title">
-                        <i class="fas fa-shopping-cart text-success"></i>
-                        Daftar Pesanan ({{ $orders->total() }})
-                    </div>
-                    <div class="table-controls">
-                        <select class="form-select form-select-sm" id="filterStatus" onchange="filterOrders()" style="min-width:140px;">
-                            <option value="">Semua Status</option>
-                            <option value="pending">Pending</option>
-                            <option value="processing">Processing</option>
-                            <option value="shipped">Shipped</option>
-                            <option value="delivered">Delivered</option>
-                            <option value="cancelled">Cancelled</option>
-                        </select>
-                        <a href="{{ route('admin.transaksis.export') }}" class="btn btn-success btn-sm">
-                            <i class="fas fa-file-excel me-1"></i>Export Excel
-                        </a>
-                    </div>
-                </div>
+           <div class="table-card-header">
+    <div class="section-title">
+        <i class="fas fa-shopping-cart text-success"></i>
+        Daftar Pesanan ({{ $orders->total() }})
+    </div>
+    <div class="table-controls">
+        <select class="form-select form-select-sm" id="filterStatus" onchange="filterOrders()" style="min-width:160px;">
+            <option value="">Semua Status</option>
+            <option value="pending">Pending</option>
+            <option value="processing">Processing</option>
+            <option value="shipped">Shipped</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+        </select>
+        <select class="form-select form-select-sm" id="filterPayment" onchange="filterOrders()" style="min-width:160px;">
+            <option value="">Semua Payment Status</option>
+            <option value="pending">Pending</option>
+            <option value="paid">Paid</option>
+            <option value="failed">Failed</option>
+        </select>
+        <a href="{{ route('admin.transaksis.export') }}" class="btn btn-success btn-sm">
+            <i class="fas fa-file-excel me-1"></i>Export Excel
+        </a>
+    </div>
+</div>
 
                 <div class="table-responsive">
                     <table class="data-table" id="ordersTable">
@@ -607,8 +613,9 @@
                         </thead>
                         <tbody>
                             @forelse($orders as $order)
-                            <tr data-status="{{ $order->order_status }}"
-                                class="{{ $order->order_status === 'cancelled' ? 'row-cancelled' : '' }}">
+                           <tr data-status="{{ $order->order_status }}"
+                            data-payment="{{ $order->payment_status }}"
+                            class="{{ $order->order_status === 'cancelled' ? 'row-cancelled' : '' }}">
                                 <td><strong>{{ $order->invoice_number }}</strong></td>
                                 <td>{{ $order->customer_name }}</td>
                                 <td>{{ $order->customer_phone }}</td>
@@ -704,13 +711,17 @@
 
         // Filter orders
         function filterOrders() {
-            const filterValue = document.getElementById('filterStatus').value.toLowerCase();
-            const rows = document.querySelectorAll('#ordersTable tbody tr[data-status]');
-            rows.forEach(row => {
-                const status = row.getAttribute('data-status');
-                row.style.display = (filterValue === '' || status === filterValue) ? '' : 'none';
-            });
-        }
+    const filterStatus  = document.getElementById('filterStatus').value.toLowerCase();
+    const filterPayment = document.getElementById('filterPayment').value.toLowerCase();
+    const rows = document.querySelectorAll('#ordersTable tbody tr[data-status]');
+    rows.forEach(row => {
+        const status  = row.getAttribute('data-status');
+        const payment = row.getAttribute('data-payment');
+        const matchStatus  = filterStatus  === '' || status  === filterStatus;
+        const matchPayment = filterPayment === '' || payment === filterPayment;
+        row.style.display = (matchStatus && matchPayment) ? '' : 'none';
+    });
+}
 
         // Update status via AJAX
         function updateStatus(orderId, field, value, selectEl) {

@@ -548,7 +548,7 @@
                                 <th>Alasan</th>
                                 <th>Keterangan</th>
                                 <th>Tgl Pengajuan</th>
-                                <th>Status</th>
+                                <th>Tgl Review</th>
                                 <th class="text-center">Aksi</th>
                             </tr>
                         </thead>
@@ -576,11 +576,11 @@
                                     <small style="color:#9ca3af;">{{ $item->created_at->format('H:i') }}</small>
                                 </td>
                                 <td>
-                                    <span class="badge-status badge-{{ $item->status }}">
-                                        {{ $item->status === 'pending' ? 'Menunggu' : ($item->status === 'approved' ? 'Disetujui' : 'Ditolak') }}
-                                    </span>
                                     @if($item->reviewed_at)
-                                        <br><small style="color:#9ca3af;">{{ $item->reviewed_at->format('d M Y') }}</small>
+                                        <small style="color:#374151;">{{ $item->reviewed_at->format('d M Y') }}</small><br>
+                                        <small style="color:#9ca3af;">{{ $item->reviewed_at->format('H:i') }}</small>
+                                    @else
+                                        <small style="color:#9ca3af;">-</small>
                                     @endif
                                 </td>
                                 <td class="text-center">

@@ -631,10 +631,10 @@
                                                class="btn-action btn-view" title="Detail">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <a href="{{ route('admin.users.edit', $user) }}"
+                                            <!-- <a href="{{ route('admin.users.edit', $user) }}"
                                                class="btn-action btn-edit" title="Edit">
                                                 <i class="fas fa-edit"></i>
-                                            </a>
+                                            </a> -->
                                             <form method="POST" action="{{ route('admin.users.destroy', $user) }}"
                                                   style="display:inline;"
                                                   onsubmit="return confirm('Yakin ingin menghapus pengguna ini?')">
@@ -704,9 +704,9 @@
                                 <a href="{{ route('admin.users.show', $user) }}" class="btn-action btn-view" title="Detail">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <a href="{{ route('admin.users.edit', $user) }}" class="btn-action btn-edit" title="Edit">
+                                <!-- <a href="{{ route('admin.users.edit', $user) }}" class="btn-action btn-edit" title="Edit">
                                     <i class="fas fa-edit"></i> Edit
-                                </a>
+                                </a> -->
                                 <form method="POST" action="{{ route('admin.users.destroy', $user) }}"
                                       style="flex:0;"
                                       onsubmit="return confirm('Yakin ingin menghapus pengguna ini?')">

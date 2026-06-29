@@ -14,6 +14,8 @@ return [
     */
 
     'name' => env('APP_NAME', 'Laravel'),
+    'admin_phone'   => env('ADMIN_PHONE'),
+'fonnte_token'  => env('FONNTE_TOKEN'),
 
     /*
     |--------------------------------------------------------------------------

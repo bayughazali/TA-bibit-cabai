@@ -396,10 +396,10 @@
                     <i class="fas fa-arrow-left"></i>
                     <span>Kembali</span>
                 </a>
-                <a href="{{ route('admin.users.edit', $user) }}" class="btn-topbar btn-topbar-edit">
+                <!-- <a href="{{ route('admin.users.edit', $user) }}" class="btn-topbar btn-topbar-edit">
                     <i class="fas fa-edit"></i>
                     <span>Edit</span>
-                </a>
+                </a> -->
                 @if($user->id !== auth()->id())
                 <button type="button" class="btn-topbar btn-topbar-delete"
                         data-bs-toggle="modal" data-bs-target="#deleteModal">
@@ -548,14 +548,14 @@
                             </div>
                         </div>
                         <div class="info-card-body" style="display:flex;flex-direction:column;gap:10px;">
-                            <a href="{{ route('admin.users.edit', $user) }}"
+                            <!-- <a href="{{ route('admin.users.edit', $user) }}"
                                style="width:100%;padding:10px 16px;border-radius:9px;border:none;
                                       background:linear-gradient(135deg,#ca8a04,#a16207);
                                       color:white;font-weight:700;font-size:0.875rem;
                                       display:flex;align-items:center;justify-content:center;gap:8px;
                                       text-decoration:none;transition:all 0.2s;">
                                 <i class="fas fa-edit"></i> Edit Pengguna
-                            </a>
+                            </a> -->
                             <a href="{{ route('admin.users') }}"
                                style="width:100%;padding:10px 16px;border-radius:9px;
                                       border:1.5px solid #e5e7eb;background:#f9fafb;

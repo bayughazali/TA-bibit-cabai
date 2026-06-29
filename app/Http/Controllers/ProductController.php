@@ -48,7 +48,7 @@ class ProductController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'category' => 'required|string|max:100',
-            'price' => 'required|numeric|min:0',
+            'price' => 'required|numeric|min:1',
             'stock' => 'required|integer|min:0',
             'status' => 'required|in:aktif,nonaktif',
             'description' => 'nullable|string',
@@ -225,21 +225,24 @@ public function publicShow($id)
 private function syncLabelAfterSave(Product $product)
 {
     if ($product->stock <= 0) {
-        return; // Sudah di-handle updateLabelBasedOnStock
+        return;
     }
 
     $bestSellingIds = \Illuminate\Support\Facades\DB::table('transaksi_details')
-        ->select('product_id', \Illuminate\Support\Facades\DB::raw('SUM(quantity) as total_sold'))
+        ->select('product_id', \Illuminate\Support\Facades\DB::raw('SUM(quantity) as total_sold'))// ← ini rumus (1)
         ->groupBy('product_id')
-        ->orderByDesc('total_sold')
-        ->take(10)
+        ->having('total_sold', '>=', 100)
+        ->orderByDesc('total_sold') // ← ini rumus (2): si > sj
+        ->take(4)                  
         ->pluck('product_id')
         ->toArray();
 
     if (in_array($product->id, $bestSellingIds)) {
         $product->label = 'terlaris';
         $product->save();
+    } else {
+        $product->label = 'tersedia';
+        $product->save();
     }
 }
-
 }

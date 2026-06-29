@@ -600,7 +600,7 @@
                                            class="form-control @error('price') is-invalid @enderror"
                                            name="price" id="price"
                                            value="{{ old('price', $product->price) }}"
-                                           min="0" step="1000" placeholder="0" required>
+                                           min="0" step="1" placeholder="0" required>
                                 </div>
                                 @error('price')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>

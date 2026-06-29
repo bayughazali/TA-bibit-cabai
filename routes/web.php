@@ -13,8 +13,7 @@ use App\Http\Controllers\TransaksiController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
-use App\Http\Controllers\AdminForgotPasswordController; // ← tambahkan ini
-
+use App\Http\Controllers\AdminForgotPasswordController;
 /*
 |--------------------------------------------------------------------------
 | Public Routes
@@ -45,9 +44,16 @@ Route::prefix('checkout')->name('checkout.')->group(function () {
     Route::get('/', [CheckoutController::class, 'index'])->name('index');
     Route::post('/process', [CheckoutController::class, 'process'])->name('process');
     Route::get('/success/{id}', [CheckoutController::class, 'success'])->name('success');
-    Route::get('/status/{id}', [CheckoutController::class, 'getStatus'])->name('status'); // ✅ hapus /checkout/
+    Route::get('/status/{id}', [CheckoutController::class, 'getStatus'])->name('status');
 });
 
+// ✅ Di LUAR group, sejajar dengan group di atas
+Route::get('/checkout/last-address', [CheckoutController::class, 'getLastAddress'])
+    ->middleware('auth')
+    ->name('checkout.last-address');
+
+
+    
 /*
 |--------------------------------------------------------------------------
 | Authentication Routes
@@ -205,4 +211,10 @@ Route::get('/reset-password', [ForgotPasswordController::class, 'showResetForm']
  
 Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword'])
      ->name('password.update');
- 
+
+     // Konfirmasi pembayaran oleh pembeli (upload bukti)
+// Route pembeli upload bukti bayar
+Route::post('/checkout/konfirmasi/{id}', [CheckoutController::class, 'konfirmasiPembayaran'])->name('checkout.konfirmasi');
+
+// Route admin approve pembayaran (taruh di group admin/auth)
+Route::post('/admin/transaksis/{id}/approve-pembayaran', [TransaksiController::class, 'approvePembayaran'])->name('admin.transaksis.approve');

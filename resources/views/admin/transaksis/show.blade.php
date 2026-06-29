@@ -486,11 +486,11 @@
                     <i class="fas fa-print"></i>
                     <span>Print</span>
                 </a>
-                <button type="button" class="btn-topbar btn-topbar-delete"
+                <!-- <button type="button" class="btn-topbar btn-topbar-delete"
                         data-bs-toggle="modal" data-bs-target="#deleteModal">
                     <i class="fas fa-trash"></i>
                     <span>Hapus</span>
-                </button>
+                </button> -->
             </div>
         </header>
 
@@ -747,7 +747,67 @@
                         </div>
                     </div>
                     @endif
+{{-- Bukti Pembayaran & Tombol Approve --}}
+                    @if($transaksi->payment_method !== 'cod')
+                    <div class="info-card">
+                        <div class="info-card-header">
+                            <div class="info-card-header-left">
+                                <div class="info-card-icon icon-green">
+                                    <i class="fas fa-receipt"></i>
+                                </div>
+                                <div>
+                                    <h3>Bukti Pembayaran</h3>
+                                    <p>Konfirmasi pembayaran pembeli</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-card-body">
+                            @if($transaksi->payment_proof)
+                                <img src="{{ Storage::url($transaksi->payment_proof) }}" 
+                                     alt="Bukti Bayar" 
+                                     class="img-fluid rounded mb-3 w-100"
+                                     style="max-height:350px;object-fit:contain;border:1px solid #e5e7eb;">
 
+                                @if($transaksi->payment_status === 'paid')
+                                    <div class="alert alert-success mb-0" style="font-size:0.84rem;">
+                                        <i class="fas fa-check-circle me-2"></i>
+                                        Dikonfirmasi lunas pada 
+                                        <strong>{{ $transaksi->confirmed_at ? \Carbon\Carbon::parse($transaksi->confirmed_at)->format('d M Y H:i') : '-' }}</strong>
+                                    </div>
+                                @elseif($transaksi->payment_status === 'waiting_confirmation')
+                                    <div class="alert alert-warning mb-3" style="font-size:0.84rem;">
+                                        <i class="fas fa-clock me-2"></i>
+                                        Menunggu konfirmasi admin
+                                    </div>
+                                    <form action="{{ route('admin.transaksis.approve', $transaksi->id) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" 
+                                                class="btn btn-success w-100 fw-bold"
+                                                onclick="return confirm('Konfirmasi pembayaran ini sebagai LUNAS?')"
+                                                style="border-radius:8px;">
+                                            <i class="fas fa-check-circle me-2"></i>Approve — Tandai Lunas
+                                        </button>
+                                    </form>
+                                @else
+                                    <form action="{{ route('admin.transaksis.approve', $transaksi->id) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" 
+                                                class="btn btn-success w-100 fw-bold"
+                                                onclick="return confirm('Konfirmasi pembayaran ini sebagai LUNAS?')"
+                                                style="border-radius:8px;">
+                                            <i class="fas fa-check-circle me-2"></i>Approve — Tandai Lunas
+                                        </button>
+                                    </form>
+                                @endif
+                            @else
+                                <div class="text-center py-3" style="color:#9ca3af;">
+                                    <i class="fas fa-image fa-2x mb-2 d-block"></i>
+                                    <span style="font-size:0.84rem;">Pembeli belum upload bukti pembayaran</span>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                    @endif
                 </div>
                 <!-- Akhir col-lg-4 -->
 

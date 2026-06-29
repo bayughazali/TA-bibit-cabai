@@ -358,42 +358,96 @@
                         </div>
                     @endif
                     <div class="alert alert-info mt-3 mb-0">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Setelah pembayaran berhasil, mohon konfirmasi melalui WhatsApp ke <strong>0813-3183-0561</strong> dengan menyertakan <strong>bukti pembayaran</strong> dan <strong>nomor invoice: {{ $transaksi->invoice_number }}</strong>
-                    </div>
+    <i class="fas fa-info-circle me-2"></i>
+    Setelah pembayaran, silakan <strong>upload bukti pembayaran</strong> di form di bawah ini. Admin akan mengkonfirmasi pembayaran Anda.
+</div>
                 </div>
             </div>
             @endif
 
-            {{-- Card Tombol Aksi (tidak ikut print) --}}
-            <div class="card success-card mt-4">
-                <div class="card-body p-4 text-center">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <a href="{{ route('home') }}" class="btn btn-outline-success w-100">
-                                <i class="fas fa-home me-2"></i>Kembali ke Beranda
-                            </a>
-                        </div>
-                        <div class="col-md-6">
-                            <button onclick="window.print()" class="btn btn-success w-100">
-                                <i class="fas fa-print me-2"></i>Cetak Bukti Checkout
-                            </button>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <a href="https://wa.me/6282313155053?text=Halo, saya ingin konfirmasi pembayaran dengan invoice {{ $transaksi->invoice_number }}" 
-                           target="_blank" 
-                           class="btn btn-success w-100">
-                            <i class="fab fa-whatsapp me-2"></i>Konfirmasi via WhatsApp
-                        </a>
-                    </div>
-                </div>
-            </div>
+{{-- Card Tombol Aksi (tidak ikut print) --}}
+<div class="card success-card mt-4">
+    <div class="card-body p-4">
 
+        {{-- Flash message --}}
+        @if(session('success'))
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+            </div>
+        @endif
+        @if($errors->any())
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle me-2"></i>{{ $errors->first() }}
+            </div>
+        @endif
+
+        {{-- Form Upload Bukti Bayar (hanya untuk non-COD & belum lunas) --}}
+@if($transaksi->payment_method !== 'cod' && $transaksi->payment_status !== 'paid')
+    @if(!$transaksi->fresh()->payment_proof)
+        <div class="mb-4">
+            <h6 class="fw-bold mb-3">
+                <i class="fas fa-upload me-2 text-success"></i>Upload Bukti Pembayaran
+            </h6>
+            <form action="{{ route('checkout.konfirmasi', $transaksi->id) }}" 
+                  method="POST" 
+                  enctype="multipart/form-data">
+                @csrf
+                <div class="mb-3">
+                    <label class="form-label text-muted small">
+                        Upload foto/screenshot bukti transfer (JPG/PNG, maks 2MB)
+                    </label>
+                    <input type="file" 
+                           name="payment_proof" 
+                           class="form-control @error('payment_proof') is-invalid @enderror" 
+                           accept="image/jpg,image/jpeg,image/png"
+                           required>
+                    @error('payment_proof')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+                <button type="submit" class="btn btn-success w-100">
+                    <i class="fas fa-paper-plane me-2"></i>Kirim Konfirmasi Pembayaran ke Admin
+                </button>
+            </form>
         </div>
+        <hr>
+    @else
+        <div class="alert alert-info mb-4">
+            <i class="fas fa-clock me-2"></i>
+            Bukti pembayaran sudah dikirim. <strong>Menunggu konfirmasi admin.</strong>
+        </div>
+    @endif
+@endif
+
+        @if($transaksi->payment_method === 'cod')
+            <div class="alert alert-secondary mb-4">
+                <i class="fas fa-truck me-2"></i>
+                Pembayaran COD dilakukan saat pesanan tiba. Status akan diperbarui oleh admin.
+            </div>
+        @endif
+
+        @if($transaksi->payment_status === 'paid')
+            <div class="alert alert-success mb-4">
+                <i class="fas fa-check-circle me-2"></i>
+                Pembayaran Anda telah <strong>dikonfirmasi lunas</strong> oleh admin!
+            </div>
+        @endif
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <a href="{{ route('home') }}" class="btn btn-outline-success w-100">
+                    <i class="fas fa-home me-2"></i>Kembali ke Beranda
+                </a>
+            </div>
+            <div class="col-md-6">
+                <button onclick="window.print()" class="btn btn-success w-100">
+                    <i class="fas fa-print me-2"></i>Cetak Bukti Checkout
+                </button>
+            </div>
+        </div>
+
     </div>
 </div>
-
 <script>
 const transaksiId = {{ $transaksi->id }};
 const statusBadge = document.getElementById('statusBadge');

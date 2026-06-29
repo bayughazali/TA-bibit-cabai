@@ -26,6 +26,8 @@ class Transaksi extends Model
         'total_amount',
         'payment_method',
         'payment_status',
+        'payment_proof',    // ← pastikan ada ini
+        'confirmed_at',     // ← pastikan ada ini
         'order_status',
         'notes',
         'paid_at'
@@ -33,6 +35,7 @@ class Transaksi extends Model
 
     protected $casts = [
         'paid_at'      => 'datetime',
+        'confirmed_at' => 'datetime',  // ← tambah ini
         'subtotal'     => 'decimal:2',
         'shipping_cost'=> 'decimal:2',
         'total_amount' => 'decimal:2',

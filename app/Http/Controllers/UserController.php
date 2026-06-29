@@ -56,10 +56,9 @@ class UserController extends Controller
             'required', 'confirmed', 'min:8',
             'regex:/^(?=.*[a-zA-Z])(?=.*[0-9])\S+$/'  // huruf+angka, no spasi
         ],
-        'phone'    => [
-            'required', 'string', 'min:12',
-            'regex:/^(\+62)[0-9]+$/'  // harus diawali +62, hanya angka
-        ],
+       'phone'    => [
+    'required', 'string', 'min:10',
+],
         'address'  => ['required', 'string', 'min:10'],
     ], [
         'name.required'     => 'Nama lengkap wajib diisi.',
@@ -77,8 +76,7 @@ class UserController extends Controller
         'password.regex'    => 'Password tidak boleh mengandung spasi dan harus terdiri dari huruf dan angka.',
 
         'phone.required'    => 'Nomor telepon wajib diisi.',
-        'phone.min'         => 'Nomor telepon minimal 12 karakter.',
-        'phone.regex'       => 'Nomor telepon harus diawali +62 dan hanya boleh berisi angka.',
+        'phone.min'         => 'Nomor telepon minimal 10 karakter.',
 
         'address.required'  => 'Alamat wajib diisi.',
         'address.min'       => 'Alamat minimal 10 karakter.',
@@ -102,7 +100,7 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        return view('admin.users.show', [
+        return view('admin.users.Show', [
             'user' => $user
         ]);
     }
@@ -118,7 +116,7 @@ class UserController extends Controller
             ->with('error', 'Anda tidak dapat mengedit akun pengguna lain.');
     }
 
-    return view('admin.users.edit', compact('user'));
+    return view('admin.users.Edit', compact('user'));
 }
 
     /**
@@ -143,9 +141,8 @@ class UserController extends Controller
             'unique:users,email,' . $user->id,
             'regex:/^[^\s]+@gmail\.com$/'
         ],
-        'phone'   => [
-            'required', 'string', 'min:12',
-            'regex:/^(\+62)[0-9]+$/'
+            'phone'   => [
+            'required', 'string', 'min:10',
         ],
         'address' => ['required', 'string', 'min:10'],
     ], [
@@ -159,20 +156,21 @@ class UserController extends Controller
         'email.regex'    => 'Email tidak boleh mengandung spasi dan harus menggunakan @gmail.com.',
 
         'phone.required' => 'Nomor telepon wajib diisi.',
-        'phone.min'      => 'Nomor telepon minimal 12 karakter.',
-        'phone.regex'    => 'Nomor telepon harus diawali +62 dan hanya boleh berisi angka.',
+'phone.min'      => 'Nomor telepon minimal 10 karakter.',
 
         'address.required' => 'Alamat wajib diisi.',
         'address.min'      => 'Alamat minimal 10 karakter.',
     ]);
 
-    $data = [
-        'name'     => $request->name,
-        'email'    => $request->email,
-        'phone'    => $request->phone,
-        'address'  => $request->address,
-        'is_admin' => $request->has('is_admin') ? 1 : 0,
-    ];
+  $data = [
+    'name'     => $request->name,
+    'email'    => $request->email,
+    'phone'    => $request->phone,
+    'address'  => $request->address,
+    'is_admin' => ($user->id === auth()->id())
+                    ? $user->is_admin
+                    : ($request->has('is_admin') ? 1 : 0),
+];
 
     if ($request->filled('password')) {
         $request->validate([
@@ -199,11 +197,6 @@ class UserController extends Controller
      */
    public function destroy(User $user)
 {
-    // Tidak bisa hapus akun siapapun selain diri sendiri
-    if (auth()->id() !== $user->id) {
-        return back()->with('error', 'Anda tidak dapat menghapus akun pengguna lain.');
-    }
-
     // Tidak bisa hapus akun sendiri
     if (auth()->id() === $user->id) {
         return back()->with('error', 'Anda tidak dapat menghapus akun sendiri.');

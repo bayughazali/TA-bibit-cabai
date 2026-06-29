@@ -619,9 +619,9 @@
                                     <div class="col-12">
                                         <label class="form-label-custom">Nomor Telepon</label>
                                         <input type="text" name="phone"
-                                               class="form-control-custom @error('phone') is-invalid @enderror"
-                                               value="{{ old('phone', $user->phone ?? '+62') }}"
-                                               placeholder="+62812xxxxxxxx">
+                                        class="form-control-custom @error('phone') is-invalid @enderror"
+                                        value="{{ old('phone', $user->phone ?? '') }}"
+                                        placeholder="081234567890">
                                         @error('phone')<div class="invalid-feedback-custom">{{ $message }}</div>@enderror
                                     </div>
                                     <div class="col-12">

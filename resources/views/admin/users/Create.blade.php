@@ -154,9 +154,9 @@
 
                     <div class="mb-3">
                         <label class="form-label">Nomor Telepon</label>
-                        <input type="text" name="phone" 
-                            value="{{ old('phone', '+62') }}"
-                            placeholder="+62812xxxxxxxx">
+                       <input type="text" name="phone" class="form-control @error('phone') is-invalid @enderror"
+                        value="{{ old('phone') }}"
+                        placeholder="081234567890">
                         @error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
 

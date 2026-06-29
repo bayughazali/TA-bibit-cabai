@@ -76,20 +76,24 @@ class ForgotPasswordController extends Controller
     // ── Kirim OTP via WhatsApp ──
     private function sendOtpViaWhatsapp(Request $request)
     {
-        $request->validate([
-            'phone' => ['required', 'digits_between:10,15'],
-        ], [
-            'phone.required'        => 'Nomor WhatsApp wajib diisi.',
-            'phone.digits_between'  => 'Nomor WhatsApp tidak valid (10-15 digit).',
-        ]);
+       $request->validate([
+    'phone' => ['required', 'min:10', 'max:15'],
+], [
+    'phone.required' => 'Nomor WhatsApp wajib diisi.',
+    'phone.min'      => 'Nomor WhatsApp minimal 10 digit.',
+    'phone.max'      => 'Nomor WhatsApp maksimal 15 digit.',
+]);
 
-        $phoneFormatted = FonnteService::formatPhone($request->phone);
+$phone = preg_replace('/\D/', '', $request->phone);
 
-      $user = User::where('phone', $phoneFormatted)
-            ->orWhere('phone', '+' . $phoneFormatted)
-            ->orWhere('phone', $request->phone)
-            ->orWhere('phone', '0' . ltrim($request->phone, '0'))
-            ->first();
+$user = User::where('phone', $phone)
+    ->orWhere('phone', '+' . $phone)
+    ->orWhere('phone', $request->phone)
+    ->orWhere('phone', '0' . ltrim($phone, '0'))
+    ->orWhere('phone', '+62' . ltrim($phone, '0'))
+    ->first();
+
+$phoneFormatted = FonnteService::formatPhone($phone);
 
         if (!$user) {
             return back()->withErrors([

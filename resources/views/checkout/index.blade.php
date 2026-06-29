@@ -56,7 +56,7 @@
                             <label class="form-label">Nama Lengkap *</label>
                             <input type="text" name="name" 
                                 class="form-control @error('name') is-invalid @enderror" 
-                                value="{{ old('name') }}" 
+                               value="{{ old('name', $prefill['name'] ?? '') }}"
                                 placeholder="Minimal 8 karakter" 
                                 minlength="8" required>
                             <small class="text-muted">Minimal 8 karakter</small>
@@ -68,11 +68,11 @@
                         <div class="mb-3">
                             <label class="form-label">Nomor Telepon *</label>
                             <input type="text" name="phone" 
-                                class="form-control @error('phone') is-invalid @enderror" 
-                                value="{{ old('phone') }}" 
-                                placeholder="+6281234567890" 
-                                minlength="11" required>
-                            <small class="text-muted">Harus diawali +62, contoh: +6281234567890</small>
+                            class="form-control @error('phone') is-invalid @enderror" 
+                            value="{{ old('phone', $prefill['phone'] ?? '') }}"
+                            placeholder="081234567890" 
+                            minlength="10" required>
+                        <small class="text-muted">Nomor telepon minimal 10 karakter</small>
                             @error('phone')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -81,7 +81,7 @@
                         <label class="form-label">Email *</label>
                         <input type="email" name="email" 
                             class="form-control @error('email') is-invalid @enderror" 
-                            value="{{ old('email') }}" 
+                            value="{{ old('email', $prefill['email'] ?? '') }}"
                             placeholder="contoh@email.com"
                             minlength="8" required>
                         <small class="text-muted">Minimal 8 karakter</small>
@@ -100,31 +100,31 @@
                         <div class="mb-3">
                             <label class="form-label">Kecamatan *</label>
                             <select name="city" id="kecamatan" class="form-control @error('city') is-invalid @enderror" required>
-                                <option value="">-- Pilih Kecamatan --</option>
-                                <option value="Bondowoso" {{ old('city') == 'Bondowoso' ? 'selected' : '' }}>Bondowoso (Pusat Kota)</option>
-                                <option value="Grujugan" {{ old('city') == 'Grujugan' ? 'selected' : '' }}>Grujugan</option>
-                                <option value="Jambesari Darus Sholah" {{ old('city') == 'Jambesari Darus Sholah' ? 'selected' : '' }}>Jambesari Darus Sholah</option>
-                                <option value="Klabang" {{ old('city') == 'Klabang' ? 'selected' : '' }}>Klabang</option>
-                                <option value="Tenggarang" {{ old('city') == 'Tenggarang' ? 'selected' : '' }}>Tenggarang</option>
-                                <option value="Binakal" {{ old('city') == 'Binakal' ? 'selected' : '' }}>Binakal</option>
-                                <option value="Prajekan" {{ old('city') == 'Prajekan' ? 'selected' : '' }}>Prajekan</option>
-                                <option value="Botolinggo" {{ old('city') == 'Botolinggo' ? 'selected' : '' }}>Botolinggo</option>
-                                <option value="Maesan" {{ old('city') == 'Maesan' ? 'selected' : '' }}>Maesan</option>
-                                <option value="Tamanan" {{ old('city') == 'Tamanan' ? 'selected' : '' }}>Tamanan</option>
-                                <option value="Wonosari" {{ old('city') == 'Wonosari' ? 'selected' : '' }}>Wonosari</option>
-                                <option value="Pujer" {{ old('city') == 'Pujer' ? 'selected' : '' }}>Pujer</option>
-                                <option value="Tlogosari" {{ old('city') == 'Tlogosari' ? 'selected' : '' }}>Tlogosari</option>
-                                <option value="Sukosari" {{ old('city') == 'Sukosari' ? 'selected' : '' }}>Sukosari</option>
-                                <option value="Sumberwringin" {{ old('city') == 'Sumberwringin' ? 'selected' : '' }}>Sumberwringin</option>
-                                <option value="Tegalampel" {{ old('city') == 'Tegalampel' ? 'selected' : '' }}>Tegalampel</option>
-                                <option value="Sempol" {{ old('city') == 'Sempol' ? 'selected' : '' }}>Sempol</option>
-                                <option value="Pakem" {{ old('city') == 'Pakem' ? 'selected' : '' }}>Pakem</option>
-                                <option value="Curahdami" {{ old('city') == 'Curahdami' ? 'selected' : '' }}>Curahdami</option>
-                                <option value="Ijen" {{ old('city') == 'Ijen' ? 'selected' : '' }}>Ijen</option>
-                                <option value="Tapen" {{ old('city') == 'Tapen' ? 'selected' : '' }}>Tapen</option>
-                                <option value="Wringin" {{ old('city') == 'Wringin' ? 'selected' : '' }}>Wringin</option>
-                                <option value="Taman Krocok" {{ old('city') == 'Taman Krocok' ? 'selected' : '' }}>Taman Krocok</option>
-                            </select>
+                            <option value="">-- Pilih Kecamatan --</option>
+                            <option value="Bondowoso" {{ old('city', $prefill['city'] ?? '') == 'Bondowoso' ? 'selected' : '' }}>Bondowoso (Pusat Kota)</option>
+                            <option value="Grujugan" {{ old('city', $prefill['city'] ?? '') == 'Grujugan' ? 'selected' : '' }}>Grujugan</option>
+                            <option value="Jambesari Darus Sholah" {{ old('city', $prefill['city'] ?? '') == 'Jambesari Darus Sholah' ? 'selected' : '' }}>Jambesari Darus Sholah</option>
+                            <option value="Klabang" {{ old('city', $prefill['city'] ?? '') == 'Klabang' ? 'selected' : '' }}>Klabang</option>
+                            <option value="Tenggarang" {{ old('city', $prefill['city'] ?? '') == 'Tenggarang' ? 'selected' : '' }}>Tenggarang</option>
+                            <option value="Binakal" {{ old('city', $prefill['city'] ?? '') == 'Binakal' ? 'selected' : '' }}>Binakal</option>
+                            <option value="Prajekan" {{ old('city', $prefill['city'] ?? '') == 'Prajekan' ? 'selected' : '' }}>Prajekan</option>
+                            <option value="Botolinggo" {{ old('city', $prefill['city'] ?? '') == 'Botolinggo' ? 'selected' : '' }}>Botolinggo</option>
+                            <option value="Maesan" {{ old('city', $prefill['city'] ?? '') == 'Maesan' ? 'selected' : '' }}>Maesan</option>
+                            <option value="Tamanan" {{ old('city', $prefill['city'] ?? '') == 'Tamanan' ? 'selected' : '' }}>Tamanan</option>
+                            <option value="Wonosari" {{ old('city', $prefill['city'] ?? '') == 'Wonosari' ? 'selected' : '' }}>Wonosari</option>
+                            <option value="Pujer" {{ old('city', $prefill['city'] ?? '') == 'Pujer' ? 'selected' : '' }}>Pujer</option>
+                            <option value="Tlogosari" {{ old('city', $prefill['city'] ?? '') == 'Tlogosari' ? 'selected' : '' }}>Tlogosari</option>
+                            <option value="Sukosari" {{ old('city', $prefill['city'] ?? '') == 'Sukosari' ? 'selected' : '' }}>Sukosari</option>
+                            <option value="Sumberwringin" {{ old('city', $prefill['city'] ?? '') == 'Sumberwringin' ? 'selected' : '' }}>Sumberwringin</option>
+                            <option value="Tegalampel" {{ old('city', $prefill['city'] ?? '') == 'Tegalampel' ? 'selected' : '' }}>Tegalampel</option>
+                            <option value="Sempol" {{ old('city', $prefill['city'] ?? '') == 'Sempol' ? 'selected' : '' }}>Sempol</option>
+                            <option value="Pakem" {{ old('city', $prefill['city'] ?? '') == 'Pakem' ? 'selected' : '' }}>Pakem</option>
+                            <option value="Curahdami" {{ old('city', $prefill['city'] ?? '') == 'Curahdami' ? 'selected' : '' }}>Curahdami</option>
+                            <option value="Ijen" {{ old('city', $prefill['city'] ?? '') == 'Ijen' ? 'selected' : '' }}>Ijen</option>
+                            <option value="Tapen" {{ old('city', $prefill['city'] ?? '') == 'Tapen' ? 'selected' : '' }}>Tapen</option>
+                            <option value="Wringin" {{ old('city', $prefill['city'] ?? '') == 'Wringin' ? 'selected' : '' }}>Wringin</option>
+                            <option value="Taman Krocok" {{ old('city', $prefill['city'] ?? '') == 'Taman Krocok' ? 'selected' : '' }}>Taman Krocok</option>
+                              </select>
                             @error('city')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -148,7 +148,7 @@
                                         class="form-control @error('address') is-invalid @enderror" 
                                         rows="4" 
                                         placeholder="Contoh: Jl. Merdeka No. 12, RT 02/RW 05, Desa Kademangan, Arah dari pasar ke utara 200m" 
-                                        minlength="20" required>{{ old('address') }}</textarea>
+                                        minlength="20" required>{{ old('address', $prefill['address'] ?? '') }}</textarea>
                                 <small class="text-muted">
                                     Wajib lengkap: Nama Jalan · No. Rumah · RT/RW · Desa/Kelurahan · Ancer-ancer
                                 </small>
@@ -163,7 +163,7 @@
                             <label class="form-label">Kode Pos *</label>
                             <input type="text" name="postal_code" 
                                 class="form-control @error('postal_code') is-invalid @enderror" 
-                                value="{{ old('postal_code', '68200') }}" 
+                                value="{{ old('postal_code', $prefill['postal_code'] ?? '68200') }}"
                                 placeholder="68200" 
                                 maxlength="5" required>
                             @error('postal_code')

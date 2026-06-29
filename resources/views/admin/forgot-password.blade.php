@@ -181,29 +181,28 @@
         </div>
     </div>
 
-    {{-- WHATSAPP SECTION --}}
-    <div id="waSection" style="display:none;">
-        <div class="mb-4">
-            <label for="phone" class="form-label fw-semibold">Nomor WhatsApp Admin</label>
-            <div class="input-group">
-                <span class="input-group-text fw-semibold" style="color:#11998e;">+62</span>
-                <input type="tel"
-                       class="form-control @error('phone') is-invalid @enderror"
-                       id="phone"
-                       name="phone"
-                       value="{{ old('phone') }}"
-                       placeholder="8123456789"
-                       inputmode="numeric">
-                        </div>
-                        <div class="form-text text-muted small">
-                            ℹ️ Masukkan nomor tanpa angka 0 di depan
-                        </div>
+                     {{-- WHATSAPP SECTION --}}
+                        <div id="waSection" style="display:none;">
+                            <div class="mb-4">
+                                <label for="phone" class="form-label fw-semibold">Nomor WhatsApp Admin</label>
+                                <div class="input-group">
+                        <input type="tel"
+                            class="form-control @error('phone') is-invalid @enderror"
+                            id="phone"
+                            name="phone"
+                            value="{{ old('phone') }}"
+                            placeholder="081234567890"
+                            inputmode="numeric">
+                    </div>
+                    <div class="form-text text-muted small">
+                        ℹ️ Masukkan nomor WhatsApp minimal 10 digit
+                    </div>
                         @error('phone')
                             <div class="text-danger mt-1 small">{{ $message }}</div>
                         @enderror
-                        <div id="phoneError" class="text-danger mt-1" style="display:none;">
-                            <small>⚠️ Nomor WhatsApp tidak valid (min 9 digit)</small>
-                        </div>
+                       <div id="phoneError" class="text-danger mt-1" style="display:none;">
+                        <small>⚠️ Nomor WhatsApp minimal 10 digit</small>
+                    </div>
                     </div>
                 </div>
 
@@ -273,12 +272,12 @@ function validateInput() {
             (val.length > 0 && !valid) ? 'block' : 'none';
         submitBtn.disabled = !valid;
     } else {
-        const val   = document.getElementById('phone').value.replace(/\D/g, '');
-        const valid = val.length >= 9 && val.length <= 13;
-        document.getElementById('phoneError').style.display =
-            (val.length > 0 && !valid) ? 'block' : 'none';
-        submitBtn.disabled = !valid;
-    }
+    const val   = document.getElementById('phone').value.replace(/\D/g, '');
+    const valid = val.length >= 10 && val.length <= 15;
+    document.getElementById('phoneError').style.display =
+        (val.length > 0 && !valid) ? 'block' : 'none';
+    submitBtn.disabled = !valid;
+}
 }
 
 document.addEventListener('DOMContentLoaded', function () {

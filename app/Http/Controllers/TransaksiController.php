@@ -12,6 +12,8 @@ use App\Mail\OrderShippedNotification;
 use App\Notifications\OrderStatusChanged;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 class TransaksiController extends Controller
 {
@@ -499,6 +501,90 @@ public function rejectCancellation(Request $request, $id)
     ]);
 
     return back()->with('success', 'Pengajuan pembatalan berhasil ditolak.');
+}
+
+/**
+ * Pembeli upload bukti pembayaran
+ */
+public function konfirmasiPembayaran(Request $request, $id)
+{
+    $request->validate([
+        'payment_proof' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+    ], [
+        'payment_proof.required' => 'Bukti pembayaran wajib diupload.',
+        'payment_proof.image'    => 'File harus berupa gambar.',
+        'payment_proof.mimes'    => 'Format gambar harus JPG atau PNG.',
+        'payment_proof.max'      => 'Ukuran gambar maksimal 2MB.',
+    ]);
+
+    $transaksi = Transaksi::findOrFail($id);
+
+    $path = $request->file('payment_proof')->store('payment_proofs', 'public');
+
+    $transaksi->update([
+        'payment_proof'  => $path,
+        'payment_status' => 'waiting_confirmation',
+    ]);
+
+    // Kirim notif WA ke admin via Fonnte
+    try {
+        $adminPhone  = env('ADMIN_PHONE', '628131830561');
+        $fonnteToken = env('FONNTE_TOKEN');
+
+        $pesan = "🔔 *Konfirmasi Pembayaran Masuk!*\n\n"
+               . "📋 Invoice: *{$transaksi->invoice_number}*\n"
+               . "👤 Pembeli: {$transaksi->customer_name}\n"
+               . "📞 Telepon: {$transaksi->customer_phone}\n"
+               . "💳 Metode: " . strtoupper($transaksi->payment_method) . "\n"
+               . "💰 Total: Rp " . number_format($transaksi->total_amount, 0, ',', '.') . "\n\n"
+               . "Silakan approve di panel admin:\n"
+               . url("/admin/transaksis/{$transaksi->id}");
+
+        Http::withHeaders(['Authorization' => $fonnteToken])
+            ->post('https://api.fonnte.com/send', [
+                'target'  => $adminPhone,
+                'message' => $pesan,
+            ]);
+    } catch (\Exception $e) {
+        Log::warning('Gagal kirim notif WA admin: ' . $e->getMessage());
+    }
+
+    return back()->with('success', 'Bukti pembayaran berhasil dikirim! Menunggu konfirmasi admin.');
+}
+
+/**
+ * Admin approve pembayaran → tandai lunas + notif WA ke pembeli
+ */
+public function approvePembayaran($id)
+{
+    $transaksi = Transaksi::findOrFail($id);
+
+    $transaksi->update([
+        'payment_status' => 'paid',
+        'paid_at'        => now(),
+        'confirmed_at'   => now(),
+    ]);
+
+    // Kirim notif WA ke pembeli via Fonnte
+    try {
+        $fonnteToken = env('FONNTE_TOKEN');
+
+        $pesan = "✅ *Pembayaran Dikonfirmasi!*\n\n"
+               . "Halo *{$transaksi->customer_name}*,\n"
+               . "Pembayaran Anda untuk invoice *{$transaksi->invoice_number}* telah dikonfirmasi.\n\n"
+               . "📦 Pesanan Anda sedang kami proses dan akan segera dikirim.\n"
+               . "Terima kasih telah berbelanja di *Shop Bibit Cabai Bondowoso*! 🌶️";
+
+        Http::withHeaders(['Authorization' => $fonnteToken])
+            ->post('https://api.fonnte.com/send', [
+                'target'  => $transaksi->customer_phone,
+                'message' => $pesan,
+            ]);
+    } catch (\Exception $e) {
+        Log::warning('Gagal kirim notif WA pembeli: ' . $e->getMessage());
+    }
+
+    return back()->with('success', 'Pembayaran berhasil dikonfirmasi dan pembeli telah dinotifikasi!');
 }
 
 

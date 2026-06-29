@@ -22,31 +22,43 @@ class FonnteService
      * @param string $message Isi pesan
      * @return bool
      */
-    public function sendMessage(string $phone, string $message): bool
-    {
-        try {
-            $response = Http::withHeaders([
-                'Authorization' => $this->token,
-            ])->post($this->apiUrl, [
-                'target'  => $phone,
-                'message' => $message,
-                'countryCode' => '62', // Indonesia
-            ]);
+ public function sendMessage(string $phone, string $message): bool
+{
+    try {
+        // Bersihkan format nomor — hapus semua non-digit
+        $phoneCleaned = preg_replace('/\D/', '', $phone);
 
-            $body = $response->json();
-
-            if ($response->successful() && isset($body['status']) && $body['status'] === true) {
-                return true;
-            }
-
-            Log::error('Fonnte send failed', ['response' => $body]);
-            return false;
-
-        } catch (\Exception $e) {
-            Log::error('Fonnte exception: ' . $e->getMessage());
-            return false;
+        // Pastikan diawali 62
+        if (str_starts_with($phoneCleaned, '0')) {
+            $phoneCleaned = '62' . substr($phoneCleaned, 1);
+        } elseif (!str_starts_with($phoneCleaned, '62')) {
+            $phoneCleaned = '62' . $phoneCleaned;
         }
+
+        Log::info('Fonnte kirim ke: ' . $phoneCleaned);
+
+        $response = Http::withHeaders([
+            'Authorization' => $this->token,
+        ])->post($this->apiUrl, [
+            'target'      => $phoneCleaned,
+            'message'     => $message,
+            'countryCode' => '62',
+        ]);
+
+        $body = $response->json();
+
+        if ($response->successful() && isset($body['status']) && $body['status'] === true) {
+            return true;
+        }
+
+        Log::error('Fonnte send failed', ['response' => $body]);
+        return false;
+
+    } catch (\Exception $e) {
+        Log::error('Fonnte exception: ' . $e->getMessage());
+        return false;
     }
+}
 
     /**
      * Format nomor WA ke format internasional

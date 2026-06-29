@@ -33,6 +33,7 @@ class ProductRecommendationController extends Controller
                 'products.price',
                 'products.stock'
             )
+            ->having('total_sold', '>=', 100)  // ← tambah baris ini
             ->orderByDesc('total_sold')
             ->take(10)
             ->get();

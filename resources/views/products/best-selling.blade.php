@@ -46,9 +46,9 @@
         <div class="col-lg-4 col-md-6">
             <div class="card product-card h-100 shadow-sm">
                 <!-- Ranking Badge untuk Top 3 -->
-                @if($index < 3)
+                @if($index < 3)  
                 <div class="position-absolute top-0 start-0 m-2" style="z-index: 10;">
-                    <span class="badge badge-ranking">
+                    <span class="badge badge-ranking">   
                         <i class="fas fa-trophy me-1"></i>#{{ $index + 1 }}
                     </span>
                 </div>
